@@ -122,6 +122,11 @@ function upload_img() {
 }
 
 $(document).ready(function() {
+	$('.isearch').on('keypress',function(e) {
+    if(e.which == 13) {
+        window.location = '/search/'+$('.isearch').val();
+    }
+});
 	if ($('.cords').length) {
 		$h = 'h1, h2, h3, h4, h5, h6';
 		$ah = $('article').find($h)

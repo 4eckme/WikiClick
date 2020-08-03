@@ -316,6 +316,7 @@ h3.pages a.selected{color:#ec1865 !important;}
 }
 .hcat{color:#888;}
 .htag{color:#026d90;}
+.hquery{color:#ec1865;}
 .bottombar{display:none;}
 .cords {
     border: 2px solid #a9dcf5;
@@ -347,6 +348,7 @@ article img {
     margin: 16px;
 }
 article a.img{border-bottom:0 !important;}
+.isearch{border-color:#888;margin:16px;}
 
 @media screen and (max-width: 1024px){
 .cords{display:none;}
