@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+<link rel="stylesheet" href="/main.css">
+<script src="/jquery.js"></script>
+<script src="/jquery.form.min.js"></script>
+<script src="/main.js"></script>
+</head><body>
+<div class="top"><h2 class="logo"><a href="/">WikiClick</a></h2></div>
+<div class="leftbar"><center class="logo2">
+<img src="/logo.png" style="
+    margin-top: 64px;
+">
+</center>
+<div class="links">
+%%links%%
+</div>
+</div>
+<div class="colorbar">Создание новой страницы</div>
+<div class="page"><article style="padding-bottom:20px;"></article>
+<form id="uploadone" method="post" action="/uploadone" enctype="multipart/form-data"><input type="file" accept="image/jpeg,image/png,image/gif" name="file"></form>
+<form action='' method="POST">
+<input type="hidden" id="pageid" value="%%id%%">
+<input id="alias" name="alias" value="%%alias%%" class="iedit %%danger%%" placeholder="Название (алиас)" style="margin-bottom:20px;" autocomplete=off>
+<input id="short" name="short" value="%%short%%"class="iedit" placeholder="Краткое описание проекта (до 255 символов)" style="margin-bottom:20px;" autocomplete=off>
+<button class="upimg">img</button><textarea class="edit" name="article" autocomplete=off>%%article%%</textarea>
+<select id="cat" name="cat" class="sedit" style="margin-top:18px">
+%%selectoptions%%
+</select>
+<input id="tags" name="tags" value="%%tags%%" class="iedit" placeholder="Теги (через запятую)" style="margin-top:20px;" autocomplete=off>
+<div class="allowed">%%allowed%%
+</div>
+<input type="button" id="preview-btn" class="button btn-white" value="Предварительный просмотр" style="margin-right:20px;"><input type="submit" class="button" value="Сохранить страницу" style="margin-right:16px;"><iframe style="border:none;position:relative;top:16px;" width="84" height="50" src="/captcha/"></iframe><input type="text" name="captcha" class="iedit %%dangercaptcha%%" style="margin-left:8px;width:120px;display:inline-block;" autocomplete=off>
+</form></div>
+</body></html>
