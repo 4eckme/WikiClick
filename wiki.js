@@ -1,10 +1,14 @@
 var db_settings = {
     host     : 'localhost',
     user     : 'root',
-    password : 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+    password : '****************',
     database : 'wikiclick',
     multipleStatements: true
 }
+
+var SITE_NAME="WikiClick";
+var DESCRIPTION='Открытая wiki-энциклопедия для IT-проектов. Тут можно рассказать о своем сайте, приложении, сервисе, игре или другой разработке.';
+var KEYWORDS = 'wiki, каталог, разработка, сайты, сервисы, приложения, игры';
 
 var cats = {
 	'dev': 'Разработка',
@@ -100,7 +104,7 @@ var cookie_settings = {
 }
 
 var sessionMiddleware = session({
-  secret: '*****************************************************',
+  secret: '****************',
   resave: true,
   saveUninitialized: true,
   cookie: cookie_settings,
@@ -143,7 +147,8 @@ var links = '<a href="/">Старт</a>'+
 '<br>'+
 cats_links()+
 '<br><br>'+
-'<a href="/random/">Случайная страница</a>';
+'<a href="/random/">Случайная страница</a>'+
+'<input type="text" class="iedit isearch" placeholder="Поиск">';
 
 var allowed = 'allowedTags: [\n'+
 '    h1, h2, h3, h4, h5, h6, blockquote, p, a, ul, ol, iframe\n'+
@@ -271,7 +276,7 @@ var CAT = function (req, res) {
 	}
 	connection.query(
 		'select count(ch.id) as cnt from pagescache ch inner join pages p on p.id=ch.id and p.cat=:cat where true '+pp.sql()+'; '+
-		'select ch.id, p.cat, p.alias, p.short, p.tagstring from pagescache ch inner join pages p on p.id=ch.id and p.cat=:cat where true; ',
+		'select ch.id, p.cat, p.alias, p.short, p.tagstring from pagescache ch inner join pages p on p.id=ch.id and p.cat=:cat where true '+pp.sql()+'; ',
 		{cat:req.params.cat},
 		function(e, r, f) {
 			if (!e) {
@@ -279,7 +284,7 @@ var CAT = function (req, res) {
 						res.status(404);
 						fs.readFile(__dirname + '/views/404.html', 'utf8', function(err, contents) {
 						    res.end(contents.replaceArray({
-								'%%links%%':links
+								'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS, '%%links%%':links
 						    }));
 							return false;
 			  			});
@@ -302,8 +307,9 @@ var CAT = function (req, res) {
 				}
 						fs.readFile(__dirname + '/views/Cat.html', 'utf8', function(err, contents) {
 						    res.end(contents.replaceArray({
-								'%%links%%':links,
+								'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS,  '%%links%%':links,
 								'%%h1%%':'Категория: <span class="hcat">'+cats[req.params.cat]+'</span>',
+								'%%h1text%%':'Категория: '+cats[req.params.cat]+' / Страница '+pp.page,
 								'%%pblocks%%':pblocks,
 								'%%empty%%':empty,
 								'%%pagination%%': pphtml
@@ -321,7 +327,7 @@ var TAG = function (req, res) {
 	}
 	connection.query(
 		'select count(ch.id) as cnt from pagescache ch inner join pages p on p.id=ch.id inner join wikitags t on ch.id = t.pageid and t.tag=:tag where true '+pp.sql()+'; '+
-		'select ch.id, p.cat, p.alias, p.short, p.tagstring from pagescache ch inner join pages p on p.id=ch.id inner join wikitags t on ch.id = t.pageid and t.tag=:tag where true; ',
+		'select ch.id, p.cat, p.alias, p.short, p.tagstring from pagescache ch inner join pages p on p.id=ch.id inner join wikitags t on ch.id = t.pageid and t.tag=:tag where true '+pp.sql()+'; ',
 		{tag:req.params.tag},
 		function(e, r, f) {
 			if (!e) {
@@ -329,6 +335,7 @@ var TAG = function (req, res) {
 				if (r[0][0].cnt == 0) { empty = '<p><h3>Не найдено упоминаний этого тега<h3></p>'; pphtml='';}
 				else { empty=''; pphtml=pp.html(); }
 				h1 = 'Тег: <span class="htag">'+req.params.tag+'</span>';
+				h1text = 'Тег: '+req.params.tag+' / Страница '+pp.page;
 				pblocks = "";
 				for(var i in r[1]){
 					tags_arr = r[1][i].tagstring.split(',');
@@ -340,8 +347,9 @@ var TAG = function (req, res) {
 				}
 						fs.readFile(__dirname + '/views/Cat.html', 'utf8', function(err, contents) {
 						    res.end(contents.replaceArray({
-								'%%links%%':links,
+								'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS,  '%%links%%':links,
 								'%%h1%%':h1,
+								'%%h1text%%':h1text,
 								'%%pblocks%%':pblocks,
 								'%%empty%%':empty,
 								'%%pagination%%': pphtml
@@ -351,6 +359,49 @@ var TAG = function (req, res) {
 		}
 	);
 }
+
+
+app.get('/search/:query', function (req, res) {
+	pp = pagination();
+	requery='+'+StripTags(req.params.query);
+	if (typeof req.params.page != 'undefined') {
+		pp.page = ((parseInt(req.params.page) > 0) ? parseInt(req.params.page) : 1);
+	}
+	connection.query(
+		'select count(ch.id) as cnt from pagescache ch inner join pages p on p.id=ch.id WHERE MATCH (p.short, p.tagstring, p.article) AGAINST (:query in boolean mode) '+pp.sql()+'; '+
+		'select ch.id, p.cat, p.alias, p.short, p.tagstring from pagescache ch inner join pages p on p.id=ch.id WHERE MATCH (p.short, p.tagstring, p.article) AGAINST (:query in boolean mode) '+pp.sql()+'; ',
+		{query: requery},
+		function(e, r, f) {
+			console.log(e);
+			if (!e) {
+				pp.set_count(r[0][0].cnt);
+				if (r[0][0].cnt == 0) { empty = '<p><h3>По Вашему запросу ничего не найдено<h3></p>'; pphtml='';}
+				else { empty=''; pphtml=pp.html(); }
+				h1 = 'Поиск: <span class="hquery">'+req.params.query+'</span>';
+				h1text = 'Поиск: '+req.params.query+' / Страница '+pp.page;
+				pblocks = "";
+				for(var i in r[1]){
+					tags_arr = r[1][i].tagstring.split(',');
+					for (var j in tags_arr) {
+						tags_arr[j]='<a href="/tag/'+encodeURIComponent(tags_arr[j])+'/" class="tag">'+tags_arr[j]+'</a>';
+					}
+					r[1][i].tagstring='<div class="tags">'+tags_arr.join('')+'</div>';
+					pblocks += '<div class="pblock"><a class="maina" href="/'+r[1][i].cat+'/'+r[1][i].alias+'/"><h2>'+r[1][i].alias+'</h2></a><h2 class="hcat">'+cats[r[1][i].cat]+'</h2><p>'+r[1][i].short+'</p>'+r[1][i].tagstring+'</div>';
+				}
+						fs.readFile(__dirname + '/views/Cat.html', 'utf8', function(err, contents) {
+						    res.end(contents.replaceArray({
+								'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS,  '%%links%%':links,
+								'%%h1%%':h1,
+								'%%h1text%%':h1text,
+								'%%pblocks%%':pblocks,
+								'%%empty%%':empty,
+								'%%pagination%%': pphtml
+						    }));
+			  			});
+			}
+		}
+	);
+});
 
 
 app.get('/', function (req, res) {
@@ -389,7 +440,7 @@ app.get('/', function (req, res) {
 					}
             
 		            res.end(contents.replaceArray({
-						'%%links%%':links,
+						'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS,  '%%links%%':links,
 						'%%comcnt%%':r[0][0].comcnt,
 						'%%comments%%':'',
 						'%%JC%%':journal_comments,
@@ -497,7 +548,7 @@ app.get('/new/', function (req, res) {
 	fs.readFile(__dirname + '/views/New.html', 'utf8', function(err, contents) {
             
                 res.end(contents.replaceArray({
-					'%%links%%':links,
+					'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS,  '%%links%%':links,
 					'%%allowed%%':allowed,
 					'%%danger%%':'',
 					'%%dangercaptcha%%':'',
@@ -531,7 +582,7 @@ app.post('/new/', function (req, res) {
 		req.session.captcha = '';
 		fs.readFile(__dirname + '/views/New.html', 'utf8', function(err, contents) {
 		        res.end(contents.replaceArray({
-					'%%links%%':links,
+					'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS,  '%%links%%':links,
 					'%%allowed%%':allowed,
 					'%%danger%%':'',
 					'%%dangercaptcha%%':'danger',
@@ -568,7 +619,7 @@ app.post('/new/', function (req, res) {
 		} else if (!e && r.length >= 1) {
 			fs.readFile(__dirname + '/views/New.html', 'utf8', function(err, contents) {
 		        res.end(contents.replaceArray({
-					'%%links%%':links,
+					'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS,  '%%links%%':links,
 					'%%allowed%%':allowed,
 					'%%danger%%':'danger',
 		            '%%id%%': 0,
@@ -612,7 +663,7 @@ app.get('/:cat/:alias/', function (req, res) {
 						}
 						fs.readFile(__dirname + '/views/Page.html', 'utf8', function(err, contents) {
 						    res.end(contents.replaceArray({
-								'%%links%%':links,
+								'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS,  '%%links%%':links,
 						        '%%id%%': r[0].id,
 								'%%alias%%': r[0].alias,
 								'%%short%%': r[0].short,
@@ -621,7 +672,8 @@ app.get('/:cat/:alias/', function (req, res) {
 								'%%tags%%':tags.join(''),
 								'%%comcnt%%':r1[1][0].comcnt,
 								'%%comments%%':'',
-								'%%versions%%':versions.join('')
+								'%%versions%%':versions.join(''),
+								'%%tagstring%%':r[0].tagstring
 						    }));
 			  			});
 					}
@@ -653,7 +705,7 @@ app.get('/:cat/:alias/version:id', function (req, res) {
 						}
 						fs.readFile(__dirname + '/views/Version.html', 'utf8', function(err, contents) {
 						    res.end(contents.replaceArray({
-								'%%links%%':links,
+								'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS,  '%%links%%':links,
 						        '%%id%%': r[0].id,
 								'%%alias%%': r[0].alias,
 								'%%short%%': r[0].short,
@@ -662,7 +714,8 @@ app.get('/:cat/:alias/version:id', function (req, res) {
 								'%%tags%%':tags.join(''),
 								'%%comcnt%%':r1[1][0].comcnt,
 								'%%comments%%':'',
-								'%%version%%':dateFormat(r[0].date, 'd mmmm yyyy HH:MM')
+								'%%version%%':dateFormat(r[0].date, 'd mmmm yyyy HH:MM'),
+								'%%tagstring%%':r[0].tagstring
 						    }));
 			  			});
 					}
@@ -724,7 +777,7 @@ app.get('/:cat/:alias/edit/', function (req, res) {
 						}
 						fs.readFile(__dirname + '/views/Edit.html', 'utf8', function(err, contents) {
 						    res.end(contents.replaceArray({
-								'%%links%%':links,
+								'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS,  '%%links%%':links,
 								'%%allowed%%':allowed,
 								'%%alias%%': r[0].alias,
 								'%%short%%': r[0].short,
@@ -750,7 +803,7 @@ app.post('/:cat/:alias/edit', function(req, res) {
 		//req.body.article = req.body.article.replaceArray({'\n': '<br>'});
 						fs.readFile(__dirname + '/views/Edit.html', 'utf8', function(err, contents) {
 						    res.end(contents.replaceArray({
-								'%%links%%':links,
+								'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS,  '%%links%%':links,
 								'%%allowed%%':allowed,
 								'%%alias%%': req.params.alias,
 								'%%short%%': req.body.short,
