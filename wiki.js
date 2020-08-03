@@ -1,7 +1,7 @@
 var db_settings = {
     host     : 'localhost',
     user     : 'root',
-    password : '****************',
+    password : '********',
     database : 'wikiclick',
     multipleStatements: true
 }
@@ -104,7 +104,7 @@ var cookie_settings = {
 }
 
 var sessionMiddleware = session({
-  secret: '****************',
+  secret: '********',
   resave: true,
   saveUninitialized: true,
   cookie: cookie_settings,
@@ -359,7 +359,7 @@ var TAG = function (req, res) {
 		}
 	);
 }
-
+ 
 
 app.get('/search/:query', function (req, res) {
 	pp = pagination();
@@ -415,11 +415,16 @@ app.get('/', function (req, res) {
 				fs.readFile(__dirname + '/views/Start.html', 'utf8', function(err, contents) {
 					
 					journal_comments = "";
-					for (var i in r[1]) {
+					for (var i in r[1]) {						
 						if (i==0 || r[1][i].pagealias != r[1][i-1].pagealias) {
-							if (r[1][i].pagealias == '/') {pa = ['wikiclick', 'Главная страница']; cat_href = '/';}
-							else {pa = r[1][i].pagealias.split('/'); cat_href="/"+pa[0]+'/';}
-							journal_comments += '<div class="line"><strong><a href="'+r[1][i].pagealias+'">'+pa[1]+'</a><span class="gray"><a href="'+cat_href+'">['+pa[0]+']</a></span></strong></div>';
+							if (r[1][i].pagealias == '/') {pa = ['wikiclick', 'Главная страница']; cat_href = '/'; alt=''}
+							else {
+								pa = r[1][i].pagealias.split('/');
+								cat_href="/"+pa[0]+'/';
+								if (typeof cats[pa[0]] != 'undefined') alt='title="'+cats[pa[0]]+'"';
+								else alt = '';
+							}
+							journal_comments += '<div class="line"><strong><a href="'+r[1][i].pagealias+'">'+pa[1]+'</a><span class="gray"><a href="'+cat_href+'" '+alt+'>['+pa[0]+']</a></span></strong></div>';
 						}
 						journal_comments += '<span class="a"><span class="log-comment">'+r[1][i].name+'</span>';
 						journal_comments += '<span class="time">'+dateFormat(r[1][i].date, "d mmmm HH:MM")+'</span></span>';
@@ -428,8 +433,12 @@ app.get('/', function (req, res) {
 					
 					journal_pages = "";
 					for (var i in r[2]) {
+
+						if (typeof cats[r[2][i].cat] != 'undefined') alt='title="'+cats[r[2][i].cat]+'"';
+						else alt = '';
+
 						if (i==0 || r[2][i].cat+'/'+r[2][i].alias != r[2][i-1].cat+'/'+r[2][i-1].alias) {
-							journal_pages += '<div class="line"><strong><a href="/'+r[2][i].cat+'/'+r[2][i].alias+'/">'+r[2][i].alias+'</a><span class="gray"><a href="/'+r[2][i].cat+'/">['+r[2][i].cat+']</a></span></strong></div>';
+							journal_pages += '<div class="line"><strong><a href="/'+r[2][i].cat+'/'+r[2][i].alias+'/">'+r[2][i].alias+'</a><span class="gray"><a href="/'+r[2][i].cat+'/" '+alt+'>['+r[2][i].cat+']</a></span></strong></div>';
 						}
 						if (!r[2][i].description) desc = 'Какие-то правки'
 						else if (r[2][i].description.length >= 32) desc = r[2][i].description.substring(0,32)+'...';
