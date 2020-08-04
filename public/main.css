@@ -354,6 +354,10 @@ article img {
 }
 article a.img{border-bottom:0 !important;}
 .isearch{border-color:#888;margin:16px;}
+h2.hcat a {
+    font-size: inherit;
+    color: inherit !important;
+}
 
 @media screen and (max-width: 1024px){
 .cords{display:none;}
