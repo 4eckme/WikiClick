@@ -119,8 +119,8 @@ span.log-comment {
 	outline: none;
     border: 2px solid #aadfe4;
 	width: 720px;
-	width: -moz-available;          /* WebKit игно�?. */
-    width: -webkit-fill-available;  /* Mozilla игно�?. */
+	width: -moz-available;          /* WebKit Ð¸Ð³Ð½Ð¾Ñ?. */
+    width: -webkit-fill-available;  /* Mozilla Ð¸Ð³Ð½Ð¾Ñ?. */
     width: fill-available;
 }
 .edit:active, .edit:focus, .iedit:active, .iedit:focus, .sedit:active, .sedit:focus {border: 2px solid #000000 !important;}
@@ -357,6 +357,7 @@ article a.img{border-bottom:0 !important;}
 .colorbar{padding-left:30px;}
 .journal{width:100%;}
 .journal{float:none;margin:0 0 30px 0}
+.journal.j-comments{position:relative;z-index:10;}
 .bottombar{display:block;
     text-align: center;
     font-size: 24px;
