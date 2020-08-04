@@ -343,7 +343,7 @@ var TAG = function (req, res) {
 						tags_arr[j]='<a href="/tag/'+encodeURIComponent(tags_arr[j])+'/" class="tag">'+tags_arr[j]+'</a>';
 					}
 					r[1][i].tagstring='<div class="tags">'+tags_arr.join('')+'</div>';
-					pblocks += '<div class="pblock"><a class="maina" href="/'+r[1][i].cat+'/'+r[1][i].alias+'/"><h2>'+r[1][i].alias+'</h2></a><h2 class="hcat">'+cats[r[1][i].cat]+'</h2><p>'+r[1][i].short+'</p>'+r[1][i].tagstring+'</div>';
+					pblocks += '<div class="pblock"><a class="maina" href="/'+r[1][i].cat+'/'+r[1][i].alias+'/"><h2>'+r[1][i].alias+'</h2></a><h2 class="hcat"><a href="/'+r[1][i].cat+'/">'+cats[r[1][i].cat]+'</a></h2><p>'+r[1][i].short+'</p>'+r[1][i].tagstring+'</div>';
 				}
 						fs.readFile(__dirname + '/views/Cat.html', 'utf8', function(err, contents) {
 						    res.end(contents.replaceArray({
@@ -386,7 +386,7 @@ app.get('/search/:query', function (req, res) {
 						tags_arr[j]='<a href="/tag/'+encodeURIComponent(tags_arr[j])+'/" class="tag">'+tags_arr[j]+'</a>';
 					}
 					r[1][i].tagstring='<div class="tags">'+tags_arr.join('')+'</div>';
-					pblocks += '<div class="pblock"><a class="maina" href="/'+r[1][i].cat+'/'+r[1][i].alias+'/"><h2>'+r[1][i].alias+'</h2></a><h2 class="hcat">'+cats[r[1][i].cat]+'</h2><p>'+r[1][i].short+'</p>'+r[1][i].tagstring+'</div>';
+					pblocks += '<div class="pblock"><a class="maina" href="/'+r[1][i].cat+'/'+r[1][i].alias+'/"><h2>'+r[1][i].alias+'</h2></a><h2 class="hcat"><a href="/'+r[1][i].cat+'/">'+cats[r[1][i].cat]+'</a></h2><p>'+r[1][i].short+'</p>'+r[1][i].tagstring+'</div>';
 				}
 						fs.readFile(__dirname + '/views/Cat.html', 'utf8', function(err, contents) {
 						    res.end(contents.replaceArray({
