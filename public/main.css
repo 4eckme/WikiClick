@@ -145,11 +145,12 @@ input.button.cancel {
     background: #fdadad;
     border-color: #f55;
 }
+.tags{padding-top:20px;}
 .tags .tag {
     display: inline-block;
     background: #006d90;
     color: #fff !important;
-    margin: 32px 12px 12px 0;
+    margin: 6px 12px 6px 0;
 	box-shadow: inset 0 -2px 0 0 #004f69;
 	font-family:monospace;
 }
@@ -216,12 +217,16 @@ a:hover span.time {
 	color: #5f0f24;
 }
 .pblock {margin:30px 20px;}
-.pblock .tags .tag {margin: 0px 12px 0 0;font-size: 14px;position: relative; top: -2px;}
+.pblock .tags .tag {margin: 0 12px 12px 0;font-size: 14px;position: relative; top: -2px;}
 .pblock h2, .pblock .tags {
     display: inline-block;
     margin-right: 20px;
 }
-.pblock p {line-height:0px;position:relative;top: -8px;}
+.pblock .tags{
+    margin-top: 0;
+    padding-top: 0;
+}
+.pblock p {line-height:24px;position:relative;top: -8px;margin: 8px 0;}
 .pblock a.maina {
     display: inline-block;
     padding: 0;
