@@ -1,9 +1,25 @@
+var site_url = 'http://wikiclick.ru';
+
+var auth = {
+	login: 'Admin',
+	password: '****************'
+}
+
 var db_settings = {
     host     : 'localhost',
     user     : 'root',
-    password : '********',
+    password : '****************',
     database : 'wikiclick',
     multipleStatements: true
+}
+
+var cookie_settings = {
+    secure: false,
+    maxAge: 1000 * 3600 * 24 * 30,
+    expires: new Date(Date.now() + 1000 * 3600 * 24 * 30),
+    httpOnly: false,
+    path: '/',
+    domain: 'wikiclick.ru'
 }
 
 var SITE_NAME="WikiClick";
@@ -94,17 +110,8 @@ app.use(jsonParser);
 
 app.use(express.static(__dirname + '/public'));
 
-var cookie_settings = {
-    secure: false,
-    maxAge: 1000 * 3600 * 24 * 30,
-    expires: new Date(Date.now() + 1000 * 3600 * 24 * 30),
-    httpOnly: false,
-    path: '/',
-    domain: 'wikiclick.ru'
-}
-
 var sessionMiddleware = session({
-  secret: '********',
+  secret: '****************',
   resave: true,
   saveUninitialized: true,
   cookie: cookie_settings,
@@ -160,6 +167,8 @@ var allowed = 'allowedTags: [\n'+
 '    a: [href, target, style, class],\n'+
 '    img: [src, class, width, height, style]\n'+
 '    iframe: [width, height, src, frameborder, allow, allowfullscreen]\n'+
+'    div: [class, style]\n'+
+'    code: [class, style]'+
 '    *: [style]\n'+
 '}'
 function Prepare(article) {
@@ -174,6 +183,8 @@ function Prepare(article) {
             'a': ['href', 'target', 'style', 'class'],
             'img': ['src', 'class', 'width', 'height', 'style'],
 			'iframe': ['width', 'height', 'src', 'frameborder', 'allow', 'allowfullscreen'],
+			'div': ['class', 'style'],
+			'code': ['class', 'style'],
 			'*': ['style']
         }
 
@@ -241,7 +252,7 @@ function AddEdit(res, req, table, data, tags_string) {
 						function(e1, r2, f2) {
 							console.log('e1', e1);
 							if(!e1) {
-									res.redirect("http://wikiclick.ru/"+fields['cat']+"/"+fields['alias']+"/");
+									res.redirect(site_url+"/"+fields['cat']+"/"+fields['alias']+"/");
 							}
 						}
 					);
@@ -303,7 +314,8 @@ var CAT = function (req, res) {
 						tags_arr[j]='<a href="/tag/'+encodeURIComponent(tags_arr[j])+'/" class="tag">'+tags_arr[j]+'</a>';
 					}
 					r[1][i].tagstring='<div class="tags">'+tags_arr.join('')+'</div>';
-					pblocks += '<div class="pblock"><a class="maina" href="/'+r[1][i].cat+'/'+r[1][i].alias+'/"><h2>'+r[1][i].alias+'</h2></a><p>'+r[1][i].short+'</p>'+r[1][i].tagstring+'</div>';
+					space_alias = r[1][i].alias.replaceArray({'_':' '});
+					pblocks += '<div class="pblock"><a class="maina" href="/'+r[1][i].cat+'/'+r[1][i].alias+'/"><h2>'+space_alias+'</h2></a><p>'+r[1][i].short+'</p>'+r[1][i].tagstring+'</div>';
 				}
 						fs.readFile(__dirname + '/views/Cat.html', 'utf8', function(err, contents) {
 						    res.end(contents.replaceArray({
@@ -343,7 +355,8 @@ var TAG = function (req, res) {
 						tags_arr[j]='<a href="/tag/'+encodeURIComponent(tags_arr[j])+'/" class="tag">'+tags_arr[j]+'</a>';
 					}
 					r[1][i].tagstring='<div class="tags">'+tags_arr.join('')+'</div>';
-					pblocks += '<div class="pblock"><a class="maina" href="/'+r[1][i].cat+'/'+r[1][i].alias+'/"><h2>'+r[1][i].alias+'</h2></a><h2 class="hcat"><a href="/'+r[1][i].cat+'/">'+cats[r[1][i].cat]+'</a></h2><p>'+r[1][i].short+'</p>'+r[1][i].tagstring+'</div>';
+					space_alias = r[1][i].alias.replaceArray({'_':' '});
+					pblocks += '<div class="pblock"><a class="maina" href="/'+r[1][i].cat+'/'+r[1][i].alias+'/"><h2>'+space_alias+'</h2></a><h2 class="hcat"><a href="/'+r[1][i].cat+'/">'+cats[r[1][i].cat]+'</a></h2><p>'+r[1][i].short+'</p>'+r[1][i].tagstring+'</div>';
 				}
 						fs.readFile(__dirname + '/views/Cat.html', 'utf8', function(err, contents) {
 						    res.end(contents.replaceArray({
@@ -386,7 +399,8 @@ app.get('/search/:query', function (req, res) {
 						tags_arr[j]='<a href="/tag/'+encodeURIComponent(tags_arr[j])+'/" class="tag">'+tags_arr[j]+'</a>';
 					}
 					r[1][i].tagstring='<div class="tags">'+tags_arr.join('')+'</div>';
-					pblocks += '<div class="pblock"><a class="maina" href="/'+r[1][i].cat+'/'+r[1][i].alias+'/"><h2>'+r[1][i].alias+'</h2></a><h2 class="hcat"><a href="/'+r[1][i].cat+'/">'+cats[r[1][i].cat]+'</a></h2><p>'+r[1][i].short+'</p>'+r[1][i].tagstring+'</div>';
+					space_alias = r[1][i].alias.replaceArray({'_':' '});
+					pblocks += '<div class="pblock"><a class="maina" href="/'+r[1][i].cat+'/'+r[1][i].alias+'/"><h2>'+space_alias+'</h2></a><h2 class="hcat"><a href="/'+r[1][i].cat+'/">'+cats[r[1][i].cat]+'</a></h2><p>'+r[1][i].short+'</p>'+r[1][i].tagstring+'</div>';
 				}
 						fs.readFile(__dirname + '/views/Cat.html', 'utf8', function(err, contents) {
 						    res.end(contents.replaceArray({
@@ -403,11 +417,57 @@ app.get('/search/:query', function (req, res) {
 	);
 });
 
+app.get('/admin/', function (req, res) {
+	if(req.session.admin === true) {
+		fs.readFile(__dirname + '/views/Admin.html', 'utf8', function(err, contents) {
+			res.end(contents.replaceArray({
+				'%%sitename%%':SITE_NAME,  '%%links%%':links, '%%login%%':auth.login
+			}));
+		});
+	} else {
+		fs.readFile(__dirname + '/views/Login.html', 'utf8', function(err, contents) {
+			res.end(contents.replaceArray({
+				'%%sitename%%':SITE_NAME,  '%%links%%':links,
+				'%%login%%':'', '%%password%%':'',
+				'%%danger%%':'', '%%dangercaptcha%%':''
+			}));
+		});
+	}
+});
+app.post("/admin/", function (req, res) {
+	if (req.body.captcha.length >= 4 && req.body.captcha == req.session.captcha) {
+		if (req.body.login.toLowerCase() === auth.login.toLowerCase() && req.body.password === auth.password) {
+			req.session.captcha = ''
+			req.session.admin = true;			
+			fs.readFile(__dirname + '/views/Admin.html', 'utf8', function(err, contents) {
+				res.end(contents.replaceArray({
+					'%%sitename%%':SITE_NAME,  '%%links%%':links, '%%login%%':auth.login
+				}));
+			});
+		} else {
+			fs.readFile(__dirname + '/views/Login.html', 'utf8', function(err, contents) {
+				res.end(contents.replaceArray({
+					'%%sitename%%':SITE_NAME,  '%%links%%':links,
+					'%%login%%':req.body.login, '%%password%%':req.body.password,
+					'%%danger%%':'danger', '%%dangercaptcha%%':''
+				}));
+			});
+		}
+	} else {
+		fs.readFile(__dirname + '/views/Login.html', 'utf8', function(err, contents) {
+			res.end(contents.replaceArray({
+				'%%sitename%%':SITE_NAME,  '%%links%%':links,
+				'%%login%%':req.body.login, '%%password%%':req.body.password,
+				'%%danger%%':'', '%%dangercaptcha%%':'danger'
+			}));
+		});	
+	}
+})
 
 app.get('/', function (req, res) {
 	connection.query(
 		'SELECT count(id) as comcnt FROM comments WHERE pagealias=:pagealias; '+
-		'SELECT name, date, pagealias FROM comments ORDER BY date DESC LIMIT 15; '+
+		'SELECT id, name, date, pagealias FROM comments ORDER BY date DESC LIMIT 15; '+
 		'SELECT id, cat, alias, description, date FROM pages ORDER BY date DESC LIMIT 15; ',
 		{pagealias:'/'},
 		function(e, r, f){
@@ -417,28 +477,33 @@ app.get('/', function (req, res) {
 					journal_comments = "";
 					for (var i in r[1]) {						
 						if (i==0 || r[1][i].pagealias != r[1][i-1].pagealias) {
-							if (r[1][i].pagealias == '/') {pa = ['wikiclick', 'Главная страница']; cat_href = '/'; alt=''}
+							if (r[1][i].pagealias == '/') {pa = ['wikiclick', 'Главная страница']; page_alias = cat_href = '/'; alt=''; space_alias=pa[1]; page_alias=''}
 							else {
 								pa = r[1][i].pagealias.split('/');
 								cat_href="/"+pa[0]+'/';
+								space_alias = pa[1].replaceArray({'_':" "});
+								page_alias = r[1][i].pagealias;
 								if (typeof cats[pa[0]] != 'undefined') alt='title="'+cats[pa[0]]+'"';
 								else alt = '';
 							}
-							journal_comments += '<div class="line"><strong><a href="'+r[1][i].pagealias+'">'+pa[1]+'</a><span class="gray"><a href="'+cat_href+'" '+alt+'>['+pa[0]+']</a></span></strong></div>';
+							journal_comments += '<div class="line"><strong><a href="'+page_alias+'/">'+space_alias+'</a><span class="gray"><a href="'+cat_href+'" '+alt+'>['+pa[0]+']</a></span></strong></div>';
 						}
-						journal_comments += '<span class="a"><span class="log-comment">'+r[1][i].name+'</span>';
-						journal_comments += '<span class="time">'+dateFormat(r[1][i].date, "d mmmm HH:MM")+'</span></span>';
+						pagealias = ((r[1][i].pagealias == '/') ? '' : r[1][i].pagealias);
+						journal_comments += '<a href="'+pagealias+'/#/comments/'+r[1][i].id+'"><span class="log-comment">'+r[1][i].name+'</span>';
+						journal_comments += '<span class="time">'+dateFormat(r[1][i].date, "d mmmm HH:MM")+'</span></a>';
 						journal_comments += '<br>';
 					}
 					
 					journal_pages = "";
 					for (var i in r[2]) {
-
+						
+						space_alias = r[2][i].alias.replaceArray({"_":" "});
+							
 						if (typeof cats[r[2][i].cat] != 'undefined') alt='title="'+cats[r[2][i].cat]+'"';
 						else alt = '';
 
 						if (i==0 || r[2][i].cat+'/'+r[2][i].alias != r[2][i-1].cat+'/'+r[2][i-1].alias) {
-							journal_pages += '<div class="line"><strong><a href="/'+r[2][i].cat+'/'+r[2][i].alias+'/">'+r[2][i].alias+'</a><span class="gray"><a href="/'+r[2][i].cat+'/" '+alt+'>['+r[2][i].cat+']</a></span></strong></div>';
+							journal_pages += '<div class="line"><strong><a href="/'+r[2][i].cat+'/'+r[2][i].alias+'/">'+space_alias+'</a><span class="gray"><a href="/'+r[2][i].cat+'/" '+alt+'>['+r[2][i].cat+']</a></span></strong></div>';
 						}
 						if (!r[2][i].description) desc = 'Какие-то правки'
 						else if (r[2][i].description.length >= 32) desc = r[2][i].description.substring(0,32)+'...';
@@ -476,7 +541,7 @@ app.post('/check-captcha/', function (req, res) {
 app.get('/random/', function (req, res) {
 	connection.query('select ch.id, p.cat, p.alias FROM pagescache ch inner join pages p on ch.id=p.id order by rand() limit 1', {}, function(e, r, f) {
 		if (!e && r.length) {
-			res.redirect('http://localhost:30000/'+r[0].cat+'/'+r[0].alias+'/');
+			res.redirect(site_url+'/'+r[0].cat+'/'+r[0].alias+'/');
 		}
 	});
 });
@@ -499,12 +564,24 @@ app.get('/comments-json/', function (req, res) {
 					if (req.session.mycomments.includes(r[i].id)) r[i].my='my'; else r[i].my = '';
 					r[i].date = dateFormat(r[i].date, "d mmmm yyyy HH:MM");
 				}
-				res.end(JSON.stringify(r))
+				res.end(JSON.stringify({comments:r,  admin:(req.session.admin===true)}))
 			}
 		}
 	);
 });
 
+app.post('/ajax-delete-comment', function (req, res) {
+	if(req.session.admin !== true) {
+		res.end(JSON.stringify({success:false}));
+		return false;	
+	} else {
+		connection.query('delete from comments where id=:id', {id:req.body.id}, function(e, r, f) {
+			if (!e) {
+				res.end(JSON.stringify({success:true}));
+			}		
+		});
+	}
+})
 
 app.post('/ajax-edit-comment/', function (req, res) {
 	if (typeof req.session.mycomments == 'undefined' || !req.session.mycomments)
@@ -583,7 +660,7 @@ app.get('/new/', function (req, res) {
 
 app.post('/new/', function (req, res) {
 	
-	req.body.alias = req.body.alias.replaceArray('\\s+', '_');
+	req.body.alias = req.body.alias.replaceArray({'\\s+': '_'});
 	req.body.tags = req.body.tags.replaceArray({',\\s+': ','});
 
 	check_captcha = req.body.captcha.length >= 4 && req.body.captcha == req.session.captcha;
@@ -664,7 +741,7 @@ app.get('/:cat/:alias/', function (req, res) {
 						console.log(e1);
 						tags = new Array();
 						for (var i in r1[0]) {
-							tags.push('<a class="tag" href="/tag/'+encodeURIComponent(r1[0][i].tag)+'">'+r1[0][i].tag+'</a>')
+							tags.push('<a class="tag" href="/tag/'+encodeURIComponent(r1[0][i].tag)+'/">'+r1[0][i].tag+'</a>')
 						}
 						versions = new Array();
 						for (var i in r1[2]) {
@@ -673,6 +750,7 @@ app.get('/:cat/:alias/', function (req, res) {
 						fs.readFile(__dirname + '/views/Page.html', 'utf8', function(err, contents) {
 						    res.end(contents.replaceArray({
 								'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS,  '%%links%%':links,
+								'%%title%%':cats[r[0].cat]+': '+r[0].alias.replaceArray({'_':' '}),
 						        '%%id%%': r[0].id,
 								'%%alias%%': r[0].alias,
 								'%%short%%': r[0].short,
@@ -692,7 +770,6 @@ app.get('/:cat/:alias/', function (req, res) {
 	);
 });
 
-
 app.get('/:cat/:alias/version:id', function (req, res) {
 	console.log(req.params);
 	connection.query(
@@ -710,11 +787,16 @@ app.get('/:cat/:alias/version:id', function (req, res) {
 						console.log(e1);
 						tags = new Array();
 						for (var i in r1[0]) {
-							tags.push('<a class="tag" href="/tag/'+r1[0][i].tag+'">'+r1[0][i].tag+'</a>')
+							tags.push('<a class="tag" href="/tag/'+r1[0][i].tag+'/">'+r1[0][i].tag+'</a>')
 						}
 						fs.readFile(__dirname + '/views/Version.html', 'utf8', function(err, contents) {
+							rm_link = '';
+							if (req.session.admin) {
+								rm_link = '<a class="ochoba rmv" href="/'+req.params.cat+'/'+req.params.alias+'/version'+req.params.id+'/remove" onclick="return confirm()">Удалить</a>';
+							}
 						    res.end(contents.replaceArray({
 								'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS,  '%%links%%':links,
+								'%%title%%':cats[r[0].cat]+': '+r[0].alias.replaceArray({'_':' '}),
 						        '%%id%%': r[0].id,
 								'%%alias%%': r[0].alias,
 								'%%short%%': r[0].short,
@@ -724,9 +806,28 @@ app.get('/:cat/:alias/version:id', function (req, res) {
 								'%%comcnt%%':r1[1][0].comcnt,
 								'%%comments%%':'',
 								'%%version%%':dateFormat(r[0].date, 'd mmmm yyyy HH:MM'),
-								'%%tagstring%%':r[0].tagstring
+								'%%tagstring%%':r[0].tagstring,
+								'%%rmlink%%':rm_link
 						    }));
 			  			});
+					}
+				);
+			}
+		}
+	);
+});
+
+app.get('/:cat/:alias/version:id/remove', function (req, res) {
+	connection.query(
+		'SELECT * FROM pages WHERE alias=:alias AND cat=:cat AND id=:id ORDER BY id DESC LIMIT 1',
+		{alias:req.params.alias, cat:req.params.cat, id:req.params.id},
+		function (e, r, f) {
+			if(!e && r.length) {
+				connection.query(
+					'DELETE from pages where id=:id; DELETE from wikitags where pageid=:id; ',
+					{id:req.params.id},
+					function(e, r, f) {
+						res.redirect(site_url+'/'+req.params.cat+'/'+req.params.alias+'/');
 					}
 				);
 			}
@@ -762,11 +863,54 @@ app.get('/:cat/:alias/comments-json/', function (req, res) {
 					if (req.session.mycomments.includes(r[i].id)) r[i].my='my'; else r[i].my = '';
 					r[i].date = dateFormat(r[i].date, "d mmmm yyyy HH:MM")
 				}
-				res.end(JSON.stringify(r))
+				res.end(JSON.stringify({comments:r, admin:(req.session.admin===true)}))
 			}
 		}
 	);
 });
+
+app.get('/:cat/:alias/move/', function (req, res) {
+	if (req.session.admin !== true) {res.end(); return false;}
+	connection.query(
+		'SELECT cat, alias FROM pages WHERE alias=:alias AND cat=:cat ORDER BY id DESC LIMIT 1',
+		{alias:req.params.alias, cat:req.params.cat},
+		function (e, r, f) {
+			console.log(e);
+			if(!e && r.length) {
+				
+						fs.readFile(__dirname + '/views/Move.html', 'utf8', function(err, contents) {
+						    res.end(contents.replaceArray({
+								'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS,  '%%links%%':links,
+								'%%alias%%': r[0].alias,
+								'%%cat%%': r[0].cat,
+								'%%selectoptions%%': cats_options(r[0].cat),
+						    }));
+			  			});
+
+			}
+		}
+	);
+});
+
+app.post('/:cat/:alias/move/', function (req, res) {
+	req.body.alias = req.body.alias.replaceArray({'\\s+': '_'});
+	newpa = req.body.cat+'/'+req.body.alias;
+	oldpa = req.body.oldcat+'/'+req.body.oldalias;
+	if (req.session.admin !== true) {res.end(); return false;}
+	connection.query(
+		'update pages set alias=:alias, cat=:cat, date=date where alias=:oldalias and cat=:oldcat; '+
+		'update comments set pagealias=:newpa, date=date where pagealias=:oldpa', 
+		{alias:req.body.alias, cat:req.body.cat, oldalias:req.body.oldalias, oldcat:req.body.oldcat, newpa:newpa, oldpa:oldpa},
+		function (e, r, f) {
+			console.log(e);
+			if(!e) {
+				res.redirect(site_url+'/'+req.body.cat+'/'+req.body.alias+'/')
+			}
+		}
+	);
+});
+
+
 
 app.get('/:cat/:alias/edit/', function (req, res) {
 	connection.query(
@@ -785,6 +929,7 @@ app.get('/:cat/:alias/edit/', function (req, res) {
 							tags.push(r1[i].tag)
 						}
 						fs.readFile(__dirname + '/views/Edit.html', 'utf8', function(err, contents) {
+							if (req.session.admin === true) move_link = '<a href="../move/">Переместить</a>'; else move_link = '';
 						    res.end(contents.replaceArray({
 								'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS,  '%%links%%':links,
 								'%%allowed%%':allowed,
@@ -792,7 +937,8 @@ app.get('/:cat/:alias/edit/', function (req, res) {
 								'%%short%%': r[0].short,
 								'%%article%%': r[0].article,
 								'%%tags%%':tags.join(', '),
-								'%%dangercaptcha%%':''
+								'%%dangercaptcha%%':'',
+								'%%movelink%%':move_link
 						    }));
 			  			});
 					}
@@ -806,11 +952,13 @@ app.post('/:cat/:alias/edit', function(req, res) {
 
 	req.body.tags = req.body.tags.replaceArray({',\\s+': ','});
 
-	check_captcha = req.body.captcha.length >= 4 && req.body.captcha == req.session.captcha;
+	check_captcha = ((req.body.captcha.length >= 4) && (req.body.captcha == req.session.captcha));
+	console.log(req.body.captcha, req.session.captcha);
 	if (!check_captcha) {
 		req.session.captcha='';
 		//req.body.article = req.body.article.replaceArray({'\n': '<br>'});
 						fs.readFile(__dirname + '/views/Edit.html', 'utf8', function(err, contents) {
+							if (req.session.admin === true) move_link = '<a onclick="move_page()">Переместить</a>'; else move_link = '';
 						    res.end(contents.replaceArray({
 								'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS,  '%%links%%':links,
 								'%%allowed%%':allowed,
@@ -818,41 +966,42 @@ app.post('/:cat/:alias/edit', function(req, res) {
 								'%%short%%': req.body.short,
 								'%%article%%': req.body.article,
 								'%%tags%%':req.body.tags,
-								'%%dangercaptcha%%':'danger'
+								'%%dangercaptcha%%':'danger',
+								'%%movelink%%':move_link
 						    }));
 			  			});
-		return false;
 	} else {
 		req.session.captcha='';
-	}
-	connection.query('select id, ip, date, description from pages where alias=:alias and cat=:cat order by id desc limit 1', {alias:req.params.alias, cat:req.params.cat},
-	function(e, r, f) {
-		if(!e && r.length >= 1) {
-			console.log(e);
-			console.log(r[0].ip, ip(req), dateFormat(r[0].date,'yyyy-mm-dd'), dateFormat(new Date(),'yyyy-mm-dd'))
-			if (r[0].ip == ip(req)	&&	dateFormat(r[0].date,'yyyy-mm-dd') == dateFormat(new Date(),'yyyy-mm-dd') && r[0].description != 'Создание страницы') {
-				AddEdit(res, req, 'pages', {
-					id: r[0].id,
-					alias: req.params.alias,
-					short:req.body.short,
-					article:req.body.article,
-					cat:req.params.cat,
-					description:req.body.description,
-					tagstring:req.body.tags
-				}, req.body.tags);
-			} else {
-				AddEdit(res, req, 'pages', {
-					id: 0,
-					alias: req.params.alias,
-					short:req.body.short,
-					article:req.body.article,
-					cat:req.params.cat,
-					description:req.body.description,
-					tagstring:req.body.tags
-				}, req.body.tags);
+	
+		connection.query('select id, ip, date, description from pages where alias=:alias and cat=:cat order by id desc limit 1', {alias:req.params.alias, cat:req.params.cat},
+		function(e, r, f) {
+			if(!e && r.length >= 1) {
+				console.log(e);
+				console.log(r[0].ip, ip(req), dateFormat(r[0].date,'yyyy-mm-dd'), dateFormat(new Date(),'yyyy-mm-dd'))
+				if (r[0].ip == ip(req)	&&	dateFormat(r[0].date,'yyyy-mm-dd') == dateFormat(new Date(),'yyyy-mm-dd') && r[0].description != 'Создание страницы') {
+					AddEdit(res, req, 'pages', {
+						id: r[0].id,
+						alias: req.params.alias,
+						short:req.body.short,
+						article:req.body.article,
+						cat:req.params.cat,
+						description:req.body.description,
+						tagstring:req.body.tags
+					}, req.body.tags);
+				} else {
+					AddEdit(res, req, 'pages', {
+						id: 0,
+						alias: req.params.alias,
+						short:req.body.short,
+						article:req.body.article,
+						cat:req.params.cat,
+						description:req.body.description,
+						tagstring:req.body.tags
+					}, req.body.tags);
+				}
 			}
-		}
-	});
+		});
+	}
 });
 
 app.post('/:cat/:alias/add-comment/', function (req, res) {
@@ -912,4 +1061,4 @@ app.post('/uploadone', function (req, res) {
 	});
 });
 
-app.listen(80, '185.244.43.111');
+app.listen(80);
