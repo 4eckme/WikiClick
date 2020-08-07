@@ -6,9 +6,12 @@
 <link rel="stylesheet" href="/main.css">
 <script src="/jquery.js"></script>
 <script src="/jquery.form.min.js"></script>
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.2/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.2/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
 <script src="/main.js"></script>
 </head><body>
-<div class="top"><h2 class="logo"><a href="/">WikiClick</a></h2></div>
+<div class="top"><h2 class="logo"><a href="/">%%sitename%%</a></h2></div>
 <div class="leftbar"><center class="logo2">
 <img src="/logo.png" style="
     margin-top: 64px;
@@ -19,7 +22,7 @@
 </div>
 </div>
 <div class="colorbar">Создание новой страницы</div>
-<div class="page"><article style="padding-bottom:20px;"></article>
+<div class="page"><div class="cords"></div><article style="padding-bottom:20px;"></article>
 <form id="uploadone" method="post" action="/uploadone" enctype="multipart/form-data"><input type="file" accept="image/jpeg,image/png,image/gif" name="file"></form>
 <form action='' method="POST">
 <input type="hidden" id="pageid" value="%%id%%">
@@ -30,8 +33,23 @@
 %%selectoptions%%
 </select>
 <input id="tags" name="tags" value="%%tags%%" class="iedit" placeholder="Теги (через запятую)" style="margin-top:20px;" autocomplete=off>
-<div class="allowed">%%allowed%%
+<div class="allowed allowed1">Список разрешенных HTML-тегов и их атрибутов.
 </div>
+<div class="allowed allowed1 hidden">Список разрешенных HTML-тегов и их атрибутов.
+
+%%allowed%%
+</div>
+<div class="allowed allowed2">Вы можете использовать интерактивные заголовки с выпадающим контентом.</div>
+<div class="allowed allowed2 hidden">Вы можете использовать интерактивные заголовки с выпадающим контентом.
+
+<code>&lt;a class="q"&gt;Интерактивный заголовок&lt;/a&gt;
+&lt;div class="q"&gt;Выпадающий контент, крупный текст&lt;/div&gt;
+
+&lt;h3&gt;&lt;a class="q"&gt;Интерактивный заголовок для навигатора&lt;/a&gt;&lt;/h3&gt;
+&lt;div class="a"&gt;Выпадающий контент, обычный текст&lt;/div&gt;</code>
+
+Интерактивные заголовки можно использовать для раздела с FAQ (пример 1).
+Также это подойдет для того чтобы скрыть второстепенный конетент (пример 2).</div>
 <input type="button" id="preview-btn" class="button btn-white" value="Предварительный просмотр" style="margin-right:20px;"><input type="submit" class="button" value="Сохранить страницу" style="margin-right:16px;"><iframe style="border:none;position:relative;top:16px;" width="84" height="50" src="/captcha/"></iframe><input type="text" name="captcha" class="iedit %%dangercaptcha%%" style="margin-left:8px;width:120px;display:inline-block;" autocomplete=off>
 </form></div>
 </body></html>

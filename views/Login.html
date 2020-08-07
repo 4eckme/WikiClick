@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel="shortcut icon" href="/favicon.png" type="image/png">
+<title>%%sitename%%: Вход для администратора</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+<link rel="stylesheet" href="/main.css">
+<script src="/jquery.js"></script>
+<script src="/main.js"></script>
+</head><body>
+<div class="top"><div class="actions"><a href="/new/">Создать страницу</a></div><h2 class="logo"><a href="/">%%sitename%%</a></h2></div>
+<div class="leftbar"><center class="logo2">
+<img src="/logo.png" style="
+    margin-top: 64px;
+">
+</center>
+<div class="links">
+%%links%%
+</div>
+</div>
+<div class="colorbar yellow">Вход только для администратора</div>
+<div class="page">
+<form action="/admin/" method="post">
+<input type="text" name="login" class="iedit %%danger%%" value="%%login%%" style="width:300px;margin-bottom:16px;" placeholder="Логин">
+<input type="password" name="password" class="iedit %%danger%%" value="%%password%%" style="width:300px" placeholder="Пароль">
+<input type="submit" class="button" value="Войти" onclick="login()" style="margin-right:16px;">
+<input type="text" name="captcha" class="iedit %%dangercaptcha%%" style="margin-right:8px;width:120px;display:inline-block;" autocomplete=off><iframe style="border:none;position:relative;top:16px;" width="84" height="50" src="/captcha/"></iframe>
+</form>
+</div>
+</body></html>
