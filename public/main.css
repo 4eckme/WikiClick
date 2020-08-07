@@ -51,7 +51,7 @@ h2, h3, h4, h5, h6 {
 }
 .block-comments{}
 hr{
-    border: 1px solid #f4f4f4;
+    border: 1px solid #eee;
     margin: 20px 0;
 }
 h1{margin-top:10px;}
@@ -113,14 +113,27 @@ span.log-comment {
     margin-top: 20px;
     box-shadow: inset 0 0 0 2px #1bc5ce73;
 }
+.allowed.allowed2 {
+	filter: hue-rotate(190deg);
+    font-family: Helvetica;
+    font-size: 16px;
+    line-height: 24px;
+}
+.allowed.allowed2 code{
+    display: inline-block;
+    padding: 12px;
+    background: #fff;
+    border: 2px solid #7ee1c1;
+	font-size: 14px;
+}
 .edit, .iedit, .sedit {
 	display:block;
 	background:#fff;
 	outline: none;
     border: 2px solid #aadfe4;
 	width: 720px;
-	width: -moz-available;          /* WebKit Ð¸Ð³Ð½Ð¾Ñ?. */
-    width: -webkit-fill-available;  /* Mozilla Ð¸Ð³Ð½Ð¾Ñ?. */
+	width: -moz-available;          /* WebKit ÐžÐ³ÐœÐŸÑ?. */
+    width: -webkit-fill-available;  /* Mozilla ÐžÐ³ÐœÐŸÑ?. */
     width: fill-available;
 }
 .edit:active, .edit:focus, .iedit:active, .iedit:focus, .sedit:active, .sedit:focus {border: 2px solid #000000 !important;}
@@ -273,7 +286,7 @@ table td, table th, table caption {
     border: 1px solid #000;
     padding: 5px;
 }
-article a {
+article a, .rcomment a {
     display: inline;
     padding: 0;
 	font-family:Helvetica;
@@ -282,7 +295,10 @@ article a {
 	padding-bottom: 1px;
     border-bottom: 1px dashed #20cbd4;
 }
-article a:hover{
+.rcomment .bind a {
+	border:0
+} 
+article a:hover, .rcomment a:hover{
 	border-bottom: 1px solid #000;
 	color:#000 !important;
 }
@@ -351,6 +367,8 @@ article img {
     display: inline-block;
     height: 200px;
     margin: 16px;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #000, 0 0 0 4px #eee;
 }
 article a.img{border-bottom:0 !important;}
 .isearch{border-color:#888;margin:16px;}
@@ -358,6 +376,73 @@ h2.hcat a {
     font-size: inherit;
     color: inherit !important;
 }
+.comments .bind {
+    margin: 10px;
+    display: inline-block;
+}
+article pre {
+	margin:0;
+}
+article code {
+    white-space: pre;
+    font-size: 12px;
+    line-height: 22px !important;
+    display: inline-block;
+    padding: 16px !important;
+    background: #fdffe2 !important;
+    color: #000;
+    box-shadow: inset 0 0 0 2px #ffe14b;
+}
+.reply.rlink{box-shadow: -16px 10px 0 0 #fff, -20px 10px 0 0 #ec1864;}
+article .q {
+    font-size: 20px;
+    line-height: 28px;
+    border-bottom: 0 !important;
+    padding: 0 !important;
+	font-weight:normal;
+    width: 100%;
+    display: block;
+}
+article a.q:before {
+    content: '▢ ';
+    position: relative;
+    top: -2px;
+}
+article div.a, article div.q {display:none;padding-bottom:4px !important; margin:8px 0;}
+.allowed{cursor:pointer;}
+.allowed.hidden{display:none;}
+.bookmark{
+	float: right;
+    font-size: 48px;
+    color: #eee;
+    cursor: pointer;
+}
+.bookmark:hover {color:#ccc;}
+.bookmark.active{color:#ff5e5e;}
+.bookmark.active:hover{color:#222}
+.star{
+    float: right;
+    margin-right: 18px;
+}
+.links a:hover span.star{text-decoration:underline !important;}
+#bookmarks {
+	display:none;
+	padding:8px;
+}
+#bookmarks a {
+    font-size: 14px;
+    color: #444 !important;
+    line-height: 18px;
+}
+a.ochoba.rmv {
+    color: #ff2727 !important;
+    margin-left: 20px;
+    border-bottom-color: #ff5b36;
+}
+.cords{display:none;}
+.mode-user #alias, .mode-user #cat {display:none;}
+.mode-admin #alias, .mode-admin #cat {border-color: #ff7070;}
+.answerlink.hidden.delink.my{margin-left:280px;}
 
 @media screen and (max-width: 1024px){
 .cords{display:none;}

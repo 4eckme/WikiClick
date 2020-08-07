@@ -1,4 +1,27 @@
+String.prototype.replaceArray = function(obj) {
+    var replaceString = this;
+    var regex;
+    for (var i in obj) {
+        regex = new RegExp(i, "gi");
+        replaceString = replaceString.replace(regex, obj[i]);
+    }
+    return replaceString;
+}
 
+window.comment = function (c) {
+	var replacements = {
+        '\n': ' <br> ',
+        '((https?):\/\/(\\S+((\\.jpg)|(\\.png)|(\\.gif))(\\[?][^\s]+)*))': '&img#$2#$3;',
+        '(http:\/\/\\S+)': '<a href="$1" target="__blank">$1</a>',
+        '(https:\/\/\\S+)': '<a href="$1" target="__blank">$1</a>',
+        '&img#(https?)#([^#\\s]+);': '<span class="bind"><a href="$1://$2" target="_blank" class="img"><img class="img" style="height:100px;" src="$1://$2"></a></span>'
+	}
+	return c.replaceArray(replacements);
+}
+function escapec(c) {
+	var replacements = {'"':'&#34;', "'":'&#39;'}
+	return c.replaceArray(replacements);
+}
 
 function insertAtCursor(myField, myValue) {
     //IE support
@@ -27,7 +50,8 @@ function ajax_edit_comment(id) {
 		data:{id:id, comment:$('textarea:visible').val()},
 		success:function(data) {
 			if (data.success) {
-				$('.rcomment:hidden').html($('textarea:visible').val());
+				$('.rcomment:hidden').html(window.comment($('textarea:visible').val()));
+				$('.rcomment:hidden').attr('data-comment', escapec($('textarea:visible').val()));
 				answercancel();
 			}
 		}
@@ -50,11 +74,12 @@ function check_captcha() {
 				   success: function(data)
 				   {
 				       console.log(data);
-					   console.log(data['id'])
+					   console.log(data['id']);
+					   rname = $('.iedit[name="name"]:visible').val().length ? $('.iedit[name="name"]:visible').val() : 'Анонимус';
 				       parent_id = parseInt($('form:visible').parent().attr('data-parent'));
-comment = '<div class="reply r'+data.id+'" style="margin-left:'+(parent_id ? 30 : 0)+'px"><div class="rname">'+$('.iedit:visible').val()+'</div><div class="rdate">только что</div><div class="rcomment">'+$('.edit:visible').val()+'</div><div id="answer'+data.id+'" data-parent="'+data.id+'"><a class="answerlink hidden" onclick="edit_comment('+data.id+')" style="display: block;">Редактировать</a><a class="answerlink" onclick="answer('+data.id+')" style="display: block;">Ответить</a></div><div class="replies"></div></div>';
-if (parent_id == 0) {$('#answer0').before(comment)}
-else {$('.r'+parent_id+' .replies:first').append(comment)}
+comm = '<div class="reply r'+data.id+'" style="margin-left:'+(parent_id ? 30 : 0)+'px" data-id="'+data.id+'"><div class="rname">'+rname+'</div><div class="rdate">только что</div><div class="rcomment" data-comment="'+escapec($('.edit:visible').val())+'">'+window.comment($('.edit:visible').val())+'</div><div id="answer'+data.id+'" data-parent="'+data.id+'"><a class="answerlink hidden delink my" onclick="delete_comment('+data.id+')">Удалить</a><a class="answerlink hidden" onclick="edit_comment('+data.id+')" style="display: block;">Редактировать</a><a class="answerlink" onclick="answer('+data.id+')" style="display: block;">Ответить</a></div><div class="replies"></div></div>';
+if (parent_id == 0) {$('#answer0').before(comm)}
+else {$('.r'+parent_id+' .replies:first').append(comm)}
 answercancel();
 
 				   }
@@ -81,27 +106,49 @@ function answer(parentid) {
 	
 	$('#answer'+parentid).prepend('<form action="add-comment", method="post"><input type="hidden" name="parentid" value="'+parentid+'"><input type="text" class="iedit" name="name" placeholder="Ваше имя" autocomplete=off><input type="text" id="icaptcha" name="captcha" class="iedit" style="margin-left:12px;margin-right:10px;width:120px;display:inline-block;" autocomplete=off><iframe style="border:none;position:relative;top:16px;" width="84" height="50" src="/captcha/"></iframe><textarea name="comment" placeholder="Комментарий" class="edit"></textarea><input type="submit" class="button" value="Добавить комментарий" onclick="check_captcha(); return false;"><input type="button" class="button cancel" value="Отмена" onclick="answercancel()"></form>');
 	$('#answer'+parentid+' a').hide();
-	if(parentid == 0) {$(document).scrollTop(999999);}
+	if(parentid == 0) {$(document).scrollTop($('#answer'+parentid).offset().top-320);}
 }
 function edit_comment(id) {
 	answercancel();
 	$('.reply .answerlink').show();
 	$('.r'+id+' .rcomment:first').hide();
-	$('.r'+id+' .rcomment:first').after('<form style="position:relative;left:-30px;"><textarea class="edit">'+$('.r'+id+' .rcomment:first').html()+'</textarea><input type="button" class="button" value="Сохранить комментарий" onclick="ajax_edit_comment('+id+'); return false;"><input type="button" class="button cancel" value="Отмена" onclick="answercancel()"></form>');
+	$('.r'+id+' .rcomment:first').after('<form style="position:relative;left:-30px;"><textarea class="edit">'+$('.r'+id+' .rcomment:first').attr('data-comment')+'</textarea><input type="button" class="button" value="Сохранить комментарий" onclick="ajax_edit_comment('+id+'); return false;"><input type="button" class="button cancel" value="Отмена" onclick="answercancel()"></form>');
 	$('#answer'+id+' a').hide();
+} function delete_comment(id) {
+	for (var i = $('.r'+id+', .r'+id+' .reply').length-1; i>=0; i--) {
+		$.ajax({
+			url:'/ajax-delete-comment/',
+			type: 'post',
+			dataType: 'json',
+			data: {id:$('.r'+id+', .r'+id+' .reply').eq(i).attr('data-id')},
+			success: function (data) {
+				if (data.success) $('.r'+id+', .r'+id+' .reply').eq(i).remove();
+			}
+		});
+	}
 }
-function comments_json() {
+function comments_json(id) {
 	$.ajax({
 		url:'comments-json',
 		type:'get',
 		dataType:'json',
-		success: function (data) {
+		success: function (d) {
+			console.log(d);
+			data=d.comments;
+			window.admin = d.admin;
 			for (var i in data) {
 				if (data[i].parentid == 0) {$container = $('.comments')}
 				else {$container = $('.r'+data[i].parentid+'').children('.replies')}
 				if (data[i].my) editcomment='<a class="answerlink hidden" onclick="edit_comment('+data[i].id+')">Редактировать</a>'; else editcomment = '';
-				answerlink = '<div id="answer'+data[i].id+'" data-parent="'+data[i].id+'">'+editcomment+'<a class="answerlink" onclick="answer('+data[i].id+')">Ответить</a></div>'
-				$container.append('<div class="reply r'+data[i].id+'" style="margin-left:'+(data[i].level ? 30 : 0)+'px"><div class="rname">'+data[i].name+'</div><div class="rdate">'+data[i].date+'</div><div class="rcomment">'+data[i].comment+'</div>'+answerlink+'<div class="replies"></div></div>');
+				if (window.admin) {
+					delcomment='<a class="answerlink hidden delink '+data[i].my+'" onclick="delete_comment('+data[i].id+')">Удалить</a>';
+				} else delcomment = '';
+				answerlink = '<div id="answer'+data[i].id+'" data-parent="'+data[i].id+'">'+delcomment+editcomment+'<a class="answerlink" onclick="answer('+data[i].id+')">Ответить</a></div>'
+				$container.append('<div class="reply r'+data[i].id+'" style="margin-left:'+(data[i].level ? 30 : 0)+'px" data-id='+data[i].id+'><div class="rname">'+data[i].name+'</div><div class="rdate">'+data[i].date+'</div><div class="rcomment" data-comment="'+escapec(data[i].comment)+'">'+window.comment(data[i].comment)+'</div>'+answerlink+'<div class="replies"></div></div>');
+				if(id == data[i].id) {
+					$(document).scrollTop($('.reply.r'+id).offset().top-320);
+					$('.reply.r'+id).addClass('rlink')
+				}
 			}
 			$('.comments').append('<div id="answer0" data-parent="0"><a class="answerlink" onclick="answer(0);">Ответить</a></div>');
 			$('.btn-show-comments').remove();
@@ -121,12 +168,60 @@ function upload_img() {
     }
 }
 
-$(document).ready(function() {
-	$('.isearch').on('keypress',function(e) {
-    if(e.which == 13) {
-        window.location = '/search/'+$('.isearch').val();
-    }
-});
+function check_bookmark(pagealias) {
+	if (window.localStorage['#'+pagealias] === "1") {
+		$('.bookmark').addClass('active');
+		$('.bookmark').attr('title', 'Убрать из закладок');
+	}
+}
+
+
+function bookmark(pagealias) {
+	if (window.localStorage['#'+pagealias] === "1") {
+		window.localStorage['#'+pagealias] = "";
+		$('.bookmark').removeClass('active');
+		$('.bookmark').attr('title', 'Добавить в закладки');
+		$.each($('#bookmarks a'), function (k, v) {
+			if(pagealias.substring(pagealias.indexOf('/')+1) == $(this).html()) {
+				$(this).remove(); return false;			
+			}
+		}); 
+	} else {
+		window.localStorage['#'+pagealias] = "1";
+		$('.bookmark').addClass('active');
+		$('.bookmark').attr('title', 'Убрать из закладок');
+		$('#bookmarks').prepend('<a href="'+pagealias.replace('#', '/')+'">'+pagealias.substring(pagealias.indexOf('/')+1)+'</a>')
+	}
+}
+
+function bookmarks() {
+	$('.links').append('<div style="margin-top:40px;"><a onclick="$(this).next(\':visible\').slideUp();$(this).next(\':hidden\').slideDown();"><span class="star">▾</span>Закладки</a><div id="bookmarks"></div></div>');
+	var c = 0;
+	for (var i in window.localStorage) {
+		if (i.indexOf('#') == 0 && window.localStorage[i] === '1') {
+			$('#bookmarks').append('<a href="'+i.replace('#', '/')+'/">'+i.substring(i.indexOf('/')+1)+'</a>'); c++;
+		}
+	}
+	if (c == 0) {
+		$('#bookmarks').append('<span style="color:#444">У Вас пока нет закладок</a>')
+	}
+}
+
+function locations() {
+	$('.reply').removeClass('rlink');
+	if (window.location.hash.toString().indexOf("#/comments/") == 0 || window.location.hash == '#/comments') {
+		cid = parseInt(window.location.hash.toString().replace("#/comments/", ''))
+		if ($('.comments').html().length) {
+			$(document).scrollTop($('.reply.r'+cid).offset().top-320);
+			$('.reply.r'+cid).addClass('rlink')
+		}
+		else {
+			comments_json(cid);
+		}
+	}
+}
+
+function cords(p) {
 	if ($('.cords').length) {
 		$h = 'h1, h2, h3, h4, h5, h6';
 		$ah = $('article').find($h)
@@ -135,6 +230,12 @@ $(document).ready(function() {
 			$ol = $('.level0');
 			$str = ''
 			$.each($ah, function(i, elm) {
+				if($(this).find('a.q').length) {
+					$(this).click(function() {
+						$(this).next(':visible').slideUp();
+						$(this).next(':hidden').slideDown();
+					});
+				}
 				if (i < $ah.length-1) {			
 					a = $ah.eq(i).prop('tagName'); b = $ah.eq(i+1).prop('tagName');
 				}
@@ -148,10 +249,50 @@ $(document).ready(function() {
 					}
 					console.log($str);
 					$ol.html($str)
+					if ($(window).width() >= 1024) $('.cords').show();
+					$('.cords a').click(function() {
+						$($(this).attr('href')).parent().next().slideDown();
+					})
+					if (p === 'preview') {
+						document.querySelectorAll('pre code').forEach((block) => {
+    						hljs.highlightBlock(block);
+ 						});
+					}
 				}
 			})
 		}
 	}
+}
+
+$(document).ready(function() {
+	$(window).resize(function() {
+		if ($(window).width() >= 1024) $('.cords').show();
+		else $('.cords').hide();
+	});
+	locations();
+	$( window ).on( 'hashchange', function( e ) {
+		locations();
+	} );
+	if($('.bookmark').length) {
+		check_bookmark($('.bookmark').attr('data-pagealias'));
+	}
+	bookmarks();
+	$('.isearch').on('keypress',function(e) {
+		if(e.which == 13) {
+		    window.location = '/search/'+$('.isearch').val()+'/';
+		}
+	});
+	$('article a.q').click(function() {
+		$(this).next(':visible').slideUp();
+		$(this).next(':hidden').slideDown();
+	});
+	$('.allowed1').click(function(){
+		$('.allowed1').toggleClass('hidden')
+	});
+	$('.allowed2').click(function(){
+		$('.allowed2').toggleClass('hidden')
+	});
+	cords();
 	if (typeof window.orientation !== 'undefined') {
 		$('body').append('<div class="bottombar"></div>');
 		$('.leftbar .links').clone().appendTo('.bottombar');
@@ -165,6 +306,7 @@ $(document).ready(function() {
 	});
 	$('#preview-btn').click(function() {
 		$('article').html($('textarea:visible').val());
+		cords('preview');
 		$(document).scrollTop(0);
 	});
 })
