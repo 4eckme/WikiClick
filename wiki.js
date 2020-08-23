@@ -68,7 +68,7 @@ var pagination = function() { return {
 		chain = Array();
 		for(i=1; i<=this.pages; i++) {
 			clss = ((i == this.page) ? 'class="selected"' : '');
-			chain.push('<a href="p.'+i+'" '+clss+'>'+i+'</a>');
+			chain.push('<a href="page_'+i+'" '+clss+'>'+i+'</a>');
 		}
 		return '<h3 class="pages"><span>Страницы:</span><div class="pages">'+chain.join('')+'</div></h3>';
 	}	
@@ -138,7 +138,7 @@ var PagesCache = function () {
 	});
 }
 PagesCache();
-setInterval(PagesCache, 1000*3600*24);
+// setInterval(PagesCache, 1000*3600*24); //Ежедневное обновление актуальных версий страниц для тегов, категорий и поиска (в последней версии функция не нужна так как обновления происходят автоматически при создании и удалении новых версий страниц)
 
 String.prototype.replaceArray = function(obj) {
     var replaceString = this;
@@ -154,7 +154,7 @@ var links = '<a href="/">Старт</a>'+
 '<br>'+
 cats_links()+
 '<br><br>'+
-'<a href="/random/">Случайная страница</a>'+
+'<a href="/случайная_страница/">Случайная страница</a>'+
 '<input type="text" class="iedit isearch" placeholder="Поиск">';
 
 var allowed = 'allowedTags: [\n'+
@@ -237,7 +237,14 @@ function AddEdit(res, req, table, data, tags_string) {
 						req.session.mycomments = new Array();
 					req.session.mycomments.push(parseInt(r.insertId));
 				}
-				if (typeof tags_string !== 'undefined' && tags_string.length) {
+				if (table == 'pages' && req.params.cacheid && r.insertId) {
+					connection.query('delete from pagescache where id=:cacheid; insert into pagescache values (:insertid);',
+					{cacheid: req.params.cacheid, insertid: r.insertId}, function(e,r,f){});
+				}
+				if (table == 'pages' && data.description == 'Создание страницы') {
+					connection.query('INSERT INTO pagescache VALUES (:id)', {id:r.insertId}, function(e,r,f){})
+				}
+				if (table == 'pages' && typeof tags_string !== 'undefined' && tags_string.length) {
 					tags_string = StripTags(tags_string);
 					tags_string = tags_string.replaceArray({',\\s+': ','});
 					tags = tags_string.split(',', 10);
@@ -281,6 +288,10 @@ function ip(req) {
 
 
 var CAT = function (req, res) {
+
+	if (typeof req.params.page !== 'undefined') dropslash(req, res);
+	else addslash(req, res);
+
 	pp = pagination();
 	if (typeof req.params.page != 'undefined') {
 		pp.page = ((parseInt(req.params.page) > 0) ? parseInt(req.params.page) : 1);
@@ -311,7 +322,7 @@ var CAT = function (req, res) {
 				for(var i in r[1]){
 					tags_arr = r[1][i].tagstring.replaceArray({',\\s+': ','}).split(',');
 					for (var j in tags_arr) {
-						tags_arr[j]='<a href="/tag/'+encodeURIComponent(tags_arr[j])+'/" class="tag">'+tags_arr[j]+'</a>';
+						tags_arr[j]='<a href="/тег/'+encodeURIComponent(tags_arr[j])+'/" class="tag">'+tags_arr[j]+'</a>';
 					}
 					r[1][i].tagstring='<div class="tags">'+tags_arr.join('')+'</div>';
 					space_alias = r[1][i].alias.replaceArray({'_':' '});
@@ -320,6 +331,7 @@ var CAT = function (req, res) {
 						fs.readFile(__dirname + '/views/Cat.html', 'utf8', function(err, contents) {
 						    res.end(contents.replaceArray({
 								'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS,  '%%links%%':links,
+								'%%itemscount%%':r[0][0].cnt,
 								'%%h1%%':'Категория: <span class="hcat">'+cats[req.params.cat]+'</span>',
 								'%%h1text%%':'Категория: '+cats[req.params.cat]+' / Страница '+pp.page,
 								'%%pblocks%%':pblocks,
@@ -333,6 +345,10 @@ var CAT = function (req, res) {
 }
 
 var TAG = function (req, res) {
+	
+	if (typeof req.params.page !== 'undefined') dropslash(req, res);
+	else addslash(req, res);
+
 	pp = pagination();
 	if (typeof req.params.page != 'undefined') {
 		pp.page = ((parseInt(req.params.page) > 0) ? parseInt(req.params.page) : 1);
@@ -352,7 +368,7 @@ var TAG = function (req, res) {
 				for(var i in r[1]){
 					tags_arr = r[1][i].tagstring.split(',');
 					for (var j in tags_arr) {
-						tags_arr[j]='<a href="/tag/'+encodeURIComponent(tags_arr[j])+'/" class="tag">'+tags_arr[j]+'</a>';
+						tags_arr[j]='<a href="/тег/'+encodeURIComponent(tags_arr[j])+'/" class="tag">'+tags_arr[j]+'</a>';
 					}
 					r[1][i].tagstring='<div class="tags">'+tags_arr.join('')+'</div>';
 					space_alias = r[1][i].alias.replaceArray({'_':' '});
@@ -361,6 +377,7 @@ var TAG = function (req, res) {
 						fs.readFile(__dirname + '/views/Cat.html', 'utf8', function(err, contents) {
 						    res.end(contents.replaceArray({
 								'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS,  '%%links%%':links,
+								'%%itemscount%%':r[0][0].cnt,
 								'%%h1%%':h1,
 								'%%h1text%%':h1text,
 								'%%pblocks%%':pblocks,
@@ -372,9 +389,14 @@ var TAG = function (req, res) {
 		}
 	);
 }
- 
 
-app.get('/search/:query', function (req, res) {
+var SEARCH = function (req, res) {
+
+	console.log(req.params.page);
+
+	if (typeof req.params.page !== 'undefined') dropslash(req, res);
+	else addslash(req, res);
+
 	pp = pagination();
 	requery='+'+StripTags(req.params.query);
 	if (typeof req.params.page != 'undefined') {
@@ -396,7 +418,7 @@ app.get('/search/:query', function (req, res) {
 				for(var i in r[1]){
 					tags_arr = r[1][i].tagstring.split(',');
 					for (var j in tags_arr) {
-						tags_arr[j]='<a href="/tag/'+encodeURIComponent(tags_arr[j])+'/" class="tag">'+tags_arr[j]+'</a>';
+						tags_arr[j]='<a href="/тег/'+encodeURIComponent(tags_arr[j])+'/" class="tag">'+tags_arr[j]+'</a>';
 					}
 					r[1][i].tagstring='<div class="tags">'+tags_arr.join('')+'</div>';
 					space_alias = r[1][i].alias.replaceArray({'_':' '});
@@ -405,6 +427,7 @@ app.get('/search/:query', function (req, res) {
 						fs.readFile(__dirname + '/views/Cat.html', 'utf8', function(err, contents) {
 						    res.end(contents.replaceArray({
 								'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS,  '%%links%%':links,
+								'%%itemscount%%':r[0][0].cnt,
 								'%%h1%%':h1,
 								'%%h1text%%':h1text,
 								'%%pblocks%%':pblocks,
@@ -415,9 +438,14 @@ app.get('/search/:query', function (req, res) {
 			}
 		}
 	);
-});
+}
+
+app.get('/'+encodeURIComponent('поиск')+'/:query/', SEARCH);
+
+app.get('/'+encodeURIComponent('поиск')+'/:query/'+encodeURIComponent('страница_')+':page', SEARCH);
 
 app.get('/admin/', function (req, res) {
+	addslash(req, res);
 	if(req.session.admin === true) {
 		fs.readFile(__dirname + '/views/Admin.html', 'utf8', function(err, contents) {
 			res.end(contents.replaceArray({
@@ -464,6 +492,15 @@ app.post("/admin/", function (req, res) {
 	}
 })
 
+function addslash(req, res) {
+	if (req.url.substring(req.url.length-1) !== '/') 
+		res.redirect(req.url+'/')
+}
+function dropslash(req, res) {
+	if (req.url.substring(req.url.length-1) === '/')
+		res.redirect(req.url.substring(0, req.url.length-1));
+}
+
 app.get('/', function (req, res) {
 	connection.query(
 		'SELECT count(id) as comcnt FROM comments WHERE pagealias=:pagealias; '+
@@ -489,7 +526,7 @@ app.get('/', function (req, res) {
 							journal_comments += '<div class="line"><strong><a href="'+page_alias+'/">'+space_alias+'</a><span class="gray"><a href="'+cat_href+'" '+alt+'>['+pa[0]+']</a></span></strong></div>';
 						}
 						pagealias = ((r[1][i].pagealias == '/') ? '' : r[1][i].pagealias);
-						journal_comments += '<a href="'+pagealias+'/#/comments/'+r[1][i].id+'"><span class="log-comment">'+r[1][i].name+'</span>';
+						journal_comments += '<a href="'+pagealias+'/#/комментарии/'+r[1][i].id+'"><span class="log-comment">'+r[1][i].name+'</span>';
 						journal_comments += '<span class="time">'+dateFormat(r[1][i].date, "d mmmm HH:MM")+'</span></a>';
 						journal_comments += '<br>';
 					}
@@ -508,7 +545,7 @@ app.get('/', function (req, res) {
 						if (!r[2][i].description) desc = 'Какие-то правки'
 						else if (r[2][i].description.length >= 32) desc = r[2][i].description.substring(0,32)+'...';
 						else desc = r[2][i].description;
-						journal_pages += '<a href="/'+r[2][i].cat+'/'+r[2][i].alias+'/version'+r[2][i].id+'" alt="'+r[2][i].description+'"><span class="log-comment">'+desc+'</span>';
+						journal_pages += '<a href="/'+r[2][i].cat+'/'+r[2][i].alias+'/индекс_'+r[2][i].id+'" alt="'+r[2][i].description+'"><span class="log-comment">'+desc+'</span>';
 						journal_pages += '<span class="time">'+dateFormat(r[2][i].date, "d mmmm HH:MM")+'</span></a>';
 						journal_pages += '<br>';
 					}
@@ -538,7 +575,7 @@ app.post('/check-captcha/', function (req, res) {
 	res.end(JSON.stringify({success:(req.body.captcha.length >= 4 && req.body.captcha == req.session.captcha)}))
 });
 
-app.get('/random/', function (req, res) {
+app.get('/'+encodeURIComponent('случайная_страница')+'/', function (req, res) {
 	connection.query('select ch.id, p.cat, p.alias FROM pagescache ch inner join pages p on ch.id=p.id order by rand() limit 1', {}, function(e, r, f) {
 		if (!e && r.length) {
 			res.redirect(site_url+'/'+r[0].cat+'/'+r[0].alias+'/');
@@ -546,9 +583,9 @@ app.get('/random/', function (req, res) {
 	});
 });
 
-app.get('/tag/:tag/', TAG);
+app.get('/'+encodeURIComponent('тег')+'/:tag/', TAG);
 
-app.get('/tag/:tag/p.:page', TAG);
+app.get('/'+encodeURIComponent('тег')+'/:tag/'+encodeURIComponent('страница_')+':page', TAG);
 
 app.get('/comments-json/', function (req, res) {
 	connection.query(
@@ -629,7 +666,9 @@ app.post('/add-comment/', function (req, res) {
 });
 
 
-app.get('/new/', function (req, res) {
+app.get('/'+encodeURIComponent('создать')+'/', function (req, res) {
+
+	addslash(req, res);
 
 	fs.readFile(__dirname + '/views/New.html', 'utf8', function(err, contents) {
             
@@ -658,7 +697,7 @@ app.get('/new/', function (req, res) {
     });
 });
 
-app.post('/new/', function (req, res) {
+app.post('/'+encodeURIComponent('создать')+'/', function (req, res) {
 	
 	req.body.alias = req.body.alias.replaceArray({'\\s+': '_'});
 	req.body.tags = req.body.tags.replaceArray({',\\s+': ','});
@@ -721,9 +760,12 @@ app.post('/new/', function (req, res) {
 	});
 });
 
-app.get('/:cat/p.:page/', CAT);
+app.get('/:cat/'+encodeURIComponent('страница_')+':page/', CAT);
 
 app.get('/:cat/:alias/', function (req, res) {
+
+	addslash(req, res);
+
 	console.log(req.params);
 	connection.query(
 		'SELECT * FROM pages WHERE alias=:alias AND cat=:cat ORDER BY id DESC LIMIT 1',
@@ -741,11 +783,11 @@ app.get('/:cat/:alias/', function (req, res) {
 						console.log(e1);
 						tags = new Array();
 						for (var i in r1[0]) {
-							tags.push('<a class="tag" href="/tag/'+encodeURIComponent(r1[0][i].tag)+'/">'+r1[0][i].tag+'</a>')
+							tags.push('<a class="tag" href="/тег/'+encodeURIComponent(r1[0][i].tag)+'/">'+r1[0][i].tag+'</a>')
 						}
 						versions = new Array();
 						for (var i in r1[2]) {
-							versions.push('<a href="version'+r1[2][i].id+'"><h3>'+dateFormat(r1[2][i].date, 'd mmmm yyyy HH:MM')+'</h3></a>')
+							versions.push('<a href="индекс_'+r1[2][i].id+'"><h3>'+dateFormat(r1[2][i].date, 'd mmmm yyyy HH:MM')+'</h3></a>')
 						}
 						fs.readFile(__dirname + '/views/Page.html', 'utf8', function(err, contents) {
 						    res.end(contents.replaceArray({
@@ -770,7 +812,10 @@ app.get('/:cat/:alias/', function (req, res) {
 	);
 });
 
-app.get('/:cat/:alias/version:id', function (req, res) {
+app.get('/:cat/:alias/'+encodeURIComponent('индекс_')+':id', function (req, res) {
+
+	dropslash(req, res);
+
 	console.log(req.params);
 	connection.query(
 		'SELECT * FROM pages WHERE alias=:alias AND cat=:cat AND id=:id ORDER BY id DESC LIMIT 1',
@@ -787,12 +832,12 @@ app.get('/:cat/:alias/version:id', function (req, res) {
 						console.log(e1);
 						tags = new Array();
 						for (var i in r1[0]) {
-							tags.push('<a class="tag" href="/tag/'+r1[0][i].tag+'/">'+r1[0][i].tag+'</a>')
+							tags.push('<a class="tag" href="/тег/'+r1[0][i].tag+'/">'+r1[0][i].tag+'</a>')
 						}
 						fs.readFile(__dirname + '/views/Version.html', 'utf8', function(err, contents) {
 							rm_link = '';
 							if (req.session.admin) {
-								rm_link = '<a class="ochoba rmv" href="/'+req.params.cat+'/'+req.params.alias+'/version'+req.params.id+'/remove" onclick="return confirm()">Удалить</a>';
+								rm_link = '<a class="ochoba rmv" href="/'+req.params.cat+'/'+req.params.alias+'/индекс_'+req.params.id+'/удалить" onclick="return confirm()">Удалить</a>';
 							}
 						    res.end(contents.replaceArray({
 								'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS,  '%%links%%':links,
@@ -817,7 +862,20 @@ app.get('/:cat/:alias/version:id', function (req, res) {
 	);
 });
 
-app.get('/:cat/:alias/version:id/remove', function (req, res) {
+app.get('/:cat/:alias/'+encodeURIComponent('индекс_')+':id/'+encodeURIComponent('удалить'), function (req, res) {
+	connection.query(
+		'SELECT p.id as pid from pages p inner join pagescache ch on p.id = ch.id and p.alias=:alias and p.cat=:cat',
+		{alias:req.params.alias, cat:req.params.cat},
+		function (e, r, f)	{
+			pid = 0; if (r.length) pid = r[0].pid;
+			res.redirect(req.url+'/'+pid)
+		}
+	);
+});
+app.get('/:cat/:alias/'+encodeURIComponent('индекс_')+':id/'+encodeURIComponent('удалить')+'/:cacheid', function (req, res) {
+	
+	if(req.session.admin !== true) {res.end(); return false;}	
+	
 	connection.query(
 		'SELECT * FROM pages WHERE alias=:alias AND cat=:cat AND id=:id ORDER BY id DESC LIMIT 1',
 		{alias:req.params.alias, cat:req.params.cat, id:req.params.id},
@@ -825,9 +883,22 @@ app.get('/:cat/:alias/version:id/remove', function (req, res) {
 			if(!e && r.length) {
 				connection.query(
 					'DELETE from pages where id=:id; DELETE from wikitags where pageid=:id; ',
-					{id:req.params.id},
+					{id:req.params.id, cat:req.params.cat, alias:req.params.alias},
 					function(e, r, f) {
-						res.redirect(site_url+'/'+req.params.cat+'/'+req.params.alias+'/');
+						if (parseInt(req.params.cacheid)==parseInt(req.params.id)) {
+							connection.query(
+								'DELETE from pagescache where id=:cacheid; '+
+								'insert into pagescache (select max(id) from pages where alias=:alias and cat=:cat)',
+								{cacheid:req.params.cacheid, alias:req.params.alias, cat:req.params.cat},
+								function (e,r,f) {console.log(e, this.sql)
+									if (parseInt(r[1].insertId))
+										res.redirect(site_url+'/'+req.params.cat+'/'+req.params.alias+'/');
+									else
+										res.redirect(site_url);					
+								}
+							);
+						}
+						
 					}
 				);
 			}
@@ -869,7 +940,8 @@ app.get('/:cat/:alias/comments-json/', function (req, res) {
 	);
 });
 
-app.get('/:cat/:alias/move/', function (req, res) {
+app.get('/:cat/:alias/'+encodeURIComponent('переместить')+'/', function (req, res) {
+	addslash(req, res);
 	if (req.session.admin !== true) {res.end(); return false;}
 	connection.query(
 		'SELECT cat, alias FROM pages WHERE alias=:alias AND cat=:cat ORDER BY id DESC LIMIT 1',
@@ -892,7 +964,7 @@ app.get('/:cat/:alias/move/', function (req, res) {
 	);
 });
 
-app.post('/:cat/:alias/move/', function (req, res) {
+app.post('/:cat/:alias/'+encodeURIComponent('переместить')+'/', function (req, res) {
 	req.body.alias = req.body.alias.replaceArray({'\\s+': '_'});
 	newpa = req.body.cat+'/'+req.body.alias;
 	oldpa = req.body.oldcat+'/'+req.body.oldalias;
@@ -912,7 +984,8 @@ app.post('/:cat/:alias/move/', function (req, res) {
 
 
 
-app.get('/:cat/:alias/edit/', function (req, res) {
+app.get('/:cat/:alias/'+encodeURIComponent('редактировать')+'/', function (req, res) {
+	addslash(req, res);
 	connection.query(
 		'SELECT * FROM pages WHERE alias=:alias AND cat=:cat ORDER BY id DESC LIMIT 1',
 		{alias:req.params.alias, cat:req.params.cat},
@@ -929,7 +1002,7 @@ app.get('/:cat/:alias/edit/', function (req, res) {
 							tags.push(r1[i].tag)
 						}
 						fs.readFile(__dirname + '/views/Edit.html', 'utf8', function(err, contents) {
-							if (req.session.admin === true) move_link = '<a href="../move/">Переместить</a>'; else move_link = '';
+							if (req.session.admin === true) move_link = '<a href="../переместить/">Переместить</a>'; else move_link = '';
 						    res.end(contents.replaceArray({
 								'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS,  '%%links%%':links,
 								'%%allowed%%':allowed,
@@ -948,8 +1021,37 @@ app.get('/:cat/:alias/edit/', function (req, res) {
 	);
 });
 
-app.post('/:cat/:alias/edit', function(req, res) {
+app.post('/:cat/:alias/'+encodeURIComponent('редактировать')+'/', function(req, res) {
+	connection.query(
+		'SELECT p.id as pid from pages p inner join pagescache ch on p.id = ch.id and p.alias=:alias and p.cat=:cat',
+		{alias:req.params.alias, cat:req.params.cat},
+		function (e, r, f) { req.session.ch = {id:r[0].pid, cat:req.params.cat, alias:req.params.alias}
+			if ((req.body.captcha.length >=4) && (req.session.captcha == req.body.captcha))
+				res.redirect(307, req.url+r[0].pid)
+			else {
+				fs.readFile(__dirname + '/views/Edit.html', 'utf8', function(err, contents) {
+					if (req.session.admin === true) move_link = '<a href="../переместить/">Переместить</a>'; else move_link = '';
+				    res.end(contents.replaceArray({
+						'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS,  '%%links%%':links,
+						'%%allowed%%':allowed,
+						'%%alias%%': req.params.alias,
+						'%%short%%': req.body.short,
+						'%%article%%': req.body.article,
+						'%%tags%%':req.body.tags,
+						'%%dangercaptcha%%':'danger',
+						'%%movelink%%':move_link
+				    }));
+			  	});
+			}
+		}	
+	)
+});
 
+app.post('/:cat/:alias/'+encodeURIComponent('редактировать')+'/:cacheid', function(req, res) {
+
+	if (!(req.session.ch.id==req.params.cacheid&&req.session.ch.alias==req.params.alias&&req.session.ch.cat==req.params.cat)) {res.end(); return false;}
+	delete req.session.ch;
+	
 	req.body.tags = req.body.tags.replaceArray({',\\s+': ','});
 
 	check_captcha = ((req.body.captcha.length >= 4) && (req.body.captcha == req.session.captcha));
@@ -958,7 +1060,7 @@ app.post('/:cat/:alias/edit', function(req, res) {
 		req.session.captcha='';
 		//req.body.article = req.body.article.replaceArray({'\n': '<br>'});
 						fs.readFile(__dirname + '/views/Edit.html', 'utf8', function(err, contents) {
-							if (req.session.admin === true) move_link = '<a onclick="move_page()">Переместить</a>'; else move_link = '';
+							if (req.session.admin === true) move_link = '<a href="../переместить/">Переместить</a>'; else move_link = '';
 						    res.end(contents.replaceArray({
 								'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS,  '%%links%%':links,
 								'%%allowed%%':allowed,
@@ -1061,4 +1163,4 @@ app.post('/uploadone', function (req, res) {
 	});
 });
 
-app.listen(80);
+app.listen(80, '185.244.43.111');
