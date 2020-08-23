@@ -208,9 +208,10 @@ function bookmarks() {
 }
 
 function locations() {
+	comments_link = '%D0%BA%D0%BE%D0%BC%D0%BC%D0%B5%D0%BD%D1%82%D0%B0%D1%80%D0%B8%D0%B8';
 	$('.reply').removeClass('rlink');
-	if (window.location.hash.toString().indexOf("#/comments/") == 0 || window.location.hash == '#/comments') {
-		cid = parseInt(window.location.hash.toString().replace("#/comments/", ''))
+	if (window.location.hash.toString().indexOf("#/"+comments_link+"/") == 0 || window.location.hash == '#/'+comments_link) {
+		cid = parseInt(window.location.hash.toString().replace("#/"+comments_link+"/", ''))
 		if ($('.comments').html().length) {
 			$(document).scrollTop($('.reply.r'+cid).offset().top-320);
 			$('.reply.r'+cid).addClass('rlink')
@@ -279,7 +280,7 @@ $(document).ready(function() {
 	bookmarks();
 	$('.isearch').on('keypress',function(e) {
 		if(e.which == 13) {
-		    window.location = '/search/'+$('.isearch').val()+'/';
+		    window.location = '/поиск/'+$('.isearch').val()+'/';
 		}
 	});
 	$('article a.q').click(function() {
@@ -291,6 +292,9 @@ $(document).ready(function() {
 	});
 	$('.allowed2').click(function(){
 		$('.allowed2').toggleClass('hidden')
+	});
+	$('.allowed3').click(function(){
+		$('.allowed3').toggleClass('hidden')
 	});
 	cords();
 	if (typeof window.orientation !== 'undefined') {

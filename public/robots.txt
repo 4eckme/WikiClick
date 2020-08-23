@@ -1,39 +1,18 @@
 User-agent: *
 Allow: /
-Allow: /*
 Allow: /*/
-Allow: /*/*
 Allow: /*/*/
-Allow: /*/*/p.*
-Disallow: /*/*/p.*/
-
-Disallow: /captcha
+Allow: /*/*/страница_*
+Disallow: /*/*/индекс_*
+Disallow: /создать/
+Disallow: /*/*/редактировать/
+Disallow: /*/*/удалить/
+Disallow: /*/*/переместить/
 Disallow: /captcha/
-
-Disallow: /random
-Disallow: /random/
-
-Disallow: /New
-Disallow: /New/
-
-Disallow: /uploadone/
-Disallow: /uploadone
-
-Disallow: /*/*/version*
-Disallow: /*/*/version*/
-
-Disallow: /*/*/edit
-Disallow: /*/*/edit/
-
+Disallow: /случайна_страница/
 Disallow: /ajax-edit-comment/
-Disallow: /ajax-edit-comment
-
 Disallow: /add-comment/
-Disallow: /add-comment
 Disallow: /*/*/add-comment/
-Disallow: /*/*/add-comment
-
 Disallow: /comments-json/
-Disallow: /comments-json
 Disallow: /*/*/comments-json/
-Disallow: /*/*/comments-json
+Disallow: /uploadone/
