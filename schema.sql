@@ -31,8 +31,11 @@ CREATE TABLE `comments` (
   `level` tinyint(8) unsigned NOT NULL,
   `pagealias` char(64) NOT NULL,
   `parentid` int(11) NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`id`),
+  KEY `idx_pathcomments` (`pagealias`),
+  KEY `idx_commentsjson` (`parentid`,`id`),
+  KEY `idx_datecomments` (`date`)
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -53,8 +56,11 @@ CREATE TABLE `pages` (
   `description` char(255) NOT NULL,
   `tagstring` char(255) NOT NULL,
   PRIMARY KEY (`id`),
+  KEY `idx_catspages` (`cat`),
+  KEY `idx_aliaspages` (`alias`),
+  KEY `idx_datepages` (`date`),
   FULLTEXT KEY `search` (`short`,`tagstring`,`article`)
-) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=43 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -84,8 +90,10 @@ CREATE TABLE `wikitags` (
   `ip` char(32) NOT NULL,
   `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `pageid` (`pageid`,`tag`)
-) ENGINE=InnoDB AUTO_INCREMENT=79 DEFAULT CHARSET=utf8;
+  UNIQUE KEY `pageid` (`pageid`,`tag`),
+  KEY `idx_tagsnames` (`tag`),
+  KEY `idx_tagspageids` (`pageid`)
+) ENGINE=InnoDB AUTO_INCREMENT=322 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -97,4 +105,4 @@ CREATE TABLE `wikitags` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-08-04  1:44:19
+-- Dump completed on 2020-08-23 16:22:08
