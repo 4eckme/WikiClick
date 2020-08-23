@@ -16,3 +16,4 @@ Disallow: /*/*/add-comment/
 Disallow: /comments-json/
 Disallow: /*/*/comments-json/
 Disallow: /uploadone/
+Disallow: /admin/
