@@ -1179,30 +1179,34 @@ function UploadPreview(req, res, id) {
       }
     });
 
-	var upload = multer({ storage : storage }).single('file', 1); 
-    upload(req,res,function(err) {
-		console.log(req.files['preview']);
-		//res.end(req.file.filename);
-		path = __dirname+'/public/uploads/'+id+'.preview.gif';
-		console.log(path)
-		gm(req.files['preview'].path).
-            quality(100).
-            geometry(240, 240, '>').
-            gravity('SouthEast').
-            noProfile().
-            write(path, function (err) {
-                child_process.exec('exiftool -comment="wiki engine http://wikiclick.ru" '+path, {shell: true, encoding: 'utf8'}, function (error, stdout, stderr) {
-                    if (error) {throw error;}
-                    console.log('stdout: ' + stdout);
-                    console.log('stderr: ' + stderr);
-					setTimeout(function() {
-						console.log(req.files.preview.path, path)
-						fs.unlink(req.files.preview.path, function() { });
-						fs.unlink(path+'_original', function() { });
-					}, 1000)
-                });
-            });
-	});
+	var upload = multer({ storage : storage }).single('file', 1);
+	if (req.files['preview'].type.substring(0, 6) == 'image/') {
+		upload(req,res,function(err) {
+			console.log(req.files['preview']);
+			//res.end(req.file.filename);
+			path = __dirname+'/public/uploads/'+id+'.preview.gif';
+			console.log(path)
+			gm(req.files['preview'].path).
+		        quality(100).
+		        geometry(240, 240, '>').
+		        gravity('SouthEast').
+		        noProfile().
+		        write(path, function (err) {
+		            child_process.exec('exiftool -comment="wiki engine http://wikiclick.ru" '+path, {shell: true, encoding: 'utf8'}, function (error, stdout, stderr) {
+		                if (error) {throw error;}
+		                console.log('stdout: ' + stdout);
+		                console.log('stderr: ' + stderr);
+						setTimeout(function() {
+							console.log(req.files.preview.path, path)
+							fs.unlink(req.files.preview.path, function() { });
+							fs.unlink(path+'_original', function() { });
+						}, 1000)
+		            });
+		        });
+		});
+	} else if (parseInt(req.params.cacheid) && parseInt(req.params.cacheid) != parseInt(id)) {
+		fs.copyFile(__dirname+'/public/uploads/'+req.params.cacheid+'.preview.gif', __dirname+'/public/uploads/'+id+'.preview.gif', fs.constants.COPYFILE_EXCL, function(err) {console.log('copyerr', err)});
+	}
 }
 
 app.post('/uploadone', multer(
