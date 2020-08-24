@@ -1,7 +1,9 @@
 User-agent: *
+Allow: /uploads/*
 Allow: /
 Allow: /*/
 Allow: /*/*/
+Allow: /*/страница_*
 Allow: /*/*/страница_*
 Disallow: /*/*/индекс_*
 Disallow: /создать/
