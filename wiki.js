@@ -1,4 +1,5 @@
 var site_url = 'http://wikiclick.ru';
+var session_secret = '****************';
 
 var auth = {
 	login: 'Admin',
@@ -68,7 +69,7 @@ var pagination = function() { return {
 		chain = Array();
 		for(i=1; i<=this.pages; i++) {
 			clss = ((i == this.page) ? 'class="selected"' : '');
-			chain.push('<a href="page_'+i+'" '+clss+'>'+i+'</a>');
+			chain.push('<a href="страница_'+i+'" '+clss+'>'+i+'</a>');
 		}
 		return '<h3 class="pages"><span>Страницы:</span><div class="pages">'+chain.join('')+'</div></h3>';
 	}	
@@ -97,12 +98,18 @@ connection.config.queryFormat = function (query, values) {
 connection.connect();
 
 var bodyParser = require('body-parser');
-var urlencodedParser = bodyParser.urlencoded({extended: false});
+var urlencodedParser = bodyParser.urlencoded({extended: true});
 
 var rand = require('random-int');
 var multer = require('multer');
 
+var formData = require("express-form-data");
 var app = express();
+const options = {
+  uploadDir: __dirname + '/public/uploads',
+  extended: true
+};
+app.use(formData.parse(options));
 
 app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
 jsonParser = bodyParser.json();
@@ -111,7 +118,7 @@ app.use(jsonParser);
 app.use(express.static(__dirname + '/public'));
 
 var sessionMiddleware = session({
-  secret: '****************',
+  secret: session_secret,
   resave: true,
   saveUninitialized: true,
   cookie: cookie_settings,
@@ -122,6 +129,14 @@ var sessionMiddleware = session({
   //})
 });
 app.use(sessionMiddleware);
+
+
+
+var im = require('imagemagick');
+var gm = require('gm').subClass({imageMagick: true});
+var child_process = require('child_process');
+
+
 
 var PagesCache = function () {
 	connection.query('SELECT max(id) as mid FROM pages GROUP BY alias', {}, function(e, r, f) {
@@ -168,7 +183,7 @@ var allowed = 'allowedTags: [\n'+
 '    img: [src, class, width, height, style]\n'+
 '    iframe: [width, height, src, frameborder, allow, allowfullscreen]\n'+
 '    div: [class, style]\n'+
-'    code: [class, style]'+
+'    code: [class, style]\n'+
 '    *: [style]\n'+
 '}'
 function Prepare(article) {
@@ -259,6 +274,7 @@ function AddEdit(res, req, table, data, tags_string) {
 						function(e1, r2, f2) {
 							console.log('e1', e1);
 							if(!e1) {
+									UploadPreview(req, res, (r.insertId ? r.insertId : data.id));
 									res.redirect(site_url+"/"+fields['cat']+"/"+fields['alias']+"/");
 							}
 						}
@@ -326,7 +342,7 @@ var CAT = function (req, res) {
 					}
 					r[1][i].tagstring='<div class="tags">'+tags_arr.join('')+'</div>';
 					space_alias = r[1][i].alias.replaceArray({'_':' '});
-					pblocks += '<div class="pblock"><a class="maina" href="/'+r[1][i].cat+'/'+r[1][i].alias+'/"><h2>'+space_alias+'</h2></a><p>'+r[1][i].short+'</p>'+r[1][i].tagstring+'</div>';
+					pblocks += '<div class="pblock"><div style="background-image:url('+site_url+'/uploads/'+r[1][i].id+'.preview.gif);" class="alias-preview"></div><a class="maina" href="/'+r[1][i].cat+'/'+r[1][i].alias+'/"><h2>'+space_alias+'</h2></a><p class="topmargin">'+r[1][i].short+'</p>'+r[1][i].tagstring+'</div>';
 				}
 						fs.readFile(__dirname + '/views/Cat.html', 'utf8', function(err, contents) {
 						    res.end(contents.replaceArray({
@@ -372,7 +388,7 @@ var TAG = function (req, res) {
 					}
 					r[1][i].tagstring='<div class="tags">'+tags_arr.join('')+'</div>';
 					space_alias = r[1][i].alias.replaceArray({'_':' '});
-					pblocks += '<div class="pblock"><a class="maina" href="/'+r[1][i].cat+'/'+r[1][i].alias+'/"><h2>'+space_alias+'</h2></a><h2 class="hcat"><a href="/'+r[1][i].cat+'/">'+cats[r[1][i].cat]+'</a></h2><p>'+r[1][i].short+'</p>'+r[1][i].tagstring+'</div>';
+					pblocks += '<div class="pblock"><div style="background-image:url('+site_url+'/uploads/'+r[1][i].id+'.preview.gif);" class="alias-preview"></div><a class="maina" href="/'+r[1][i].cat+'/'+r[1][i].alias+'/"><h2>'+space_alias+'</h2></a><h2 class="hcat"><a href="/'+r[1][i].cat+'/">'+cats[r[1][i].cat]+'</a></h2><p>'+r[1][i].short+'</p>'+r[1][i].tagstring+'</div>';
 				}
 						fs.readFile(__dirname + '/views/Cat.html', 'utf8', function(err, contents) {
 						    res.end(contents.replaceArray({
@@ -422,7 +438,7 @@ var SEARCH = function (req, res) {
 					}
 					r[1][i].tagstring='<div class="tags">'+tags_arr.join('')+'</div>';
 					space_alias = r[1][i].alias.replaceArray({'_':' '});
-					pblocks += '<div class="pblock"><a class="maina" href="/'+r[1][i].cat+'/'+r[1][i].alias+'/"><h2>'+space_alias+'</h2></a><h2 class="hcat"><a href="/'+r[1][i].cat+'/">'+cats[r[1][i].cat]+'</a></h2><p>'+r[1][i].short+'</p>'+r[1][i].tagstring+'</div>';
+					pblocks += '<div class="pblock"><div style="background-image:url('+site_url+'/uploads/'+r[1][i].id+'.preview.gif);" class="alias-preview"></div><a class="maina" href="/'+r[1][i].cat+'/'+r[1][i].alias+'/"><h2>'+space_alias+'</h2></a><h2 class="hcat"><a href="/'+r[1][i].cat+'/">'+cats[r[1][i].cat]+'</a></h2><p>'+r[1][i].short+'</p>'+r[1][i].tagstring+'</div>';
 				}
 						fs.readFile(__dirname + '/views/Cat.html', 'utf8', function(err, contents) {
 						    res.end(contents.replaceArray({
@@ -439,6 +455,11 @@ var SEARCH = function (req, res) {
 		}
 	);
 }
+
+app.get('/uploads/*+.preview.gif', function(req, res) {
+    res.redirect(site_url+'/preview.gif');
+});
+
 
 app.get('/'+encodeURIComponent('поиск')+'/:query/', SEARCH);
 
@@ -699,6 +720,7 @@ app.get('/'+encodeURIComponent('создать')+'/', function (req, res) {
 
 app.post('/'+encodeURIComponent('создать')+'/', function (req, res) {
 	
+	console.log(req.body);
 	req.body.alias = req.body.alias.replaceArray({'\\s+': '_'});
 	req.body.tags = req.body.tags.replaceArray({',\\s+': ','});
 
@@ -879,24 +901,27 @@ app.get('/:cat/:alias/'+encodeURIComponent('индекс_')+':id/'+encodeURIComp
 	connection.query(
 		'SELECT * FROM pages WHERE alias=:alias AND cat=:cat AND id=:id ORDER BY id DESC LIMIT 1',
 		{alias:req.params.alias, cat:req.params.cat, id:req.params.id},
-		function (e, r, f) {
-			if(!e && r.length) {
+		function (e0, r0, f0) {
+			if(!e0 && r0.length) {
 				connection.query(
 					'DELETE from pages where id=:id; DELETE from wikitags where pageid=:id; ',
 					{id:req.params.id, cat:req.params.cat, alias:req.params.alias},
-					function(e, r, f) {
+					function(e1, r1, f1) {
+						if (!e1) fs.unlink(__dirname+'/public/uploads/'+parseInt(req.params.id)+'.preview.gif', function() { });
 						if (parseInt(req.params.cacheid)==parseInt(req.params.id)) {
 							connection.query(
 								'DELETE from pagescache where id=:cacheid; '+
 								'insert into pagescache (select max(id) from pages where alias=:alias and cat=:cat)',
 								{cacheid:req.params.cacheid, alias:req.params.alias, cat:req.params.cat},
 								function (e,r,f) {console.log(e, this.sql)
-									if (parseInt(r[1].insertId))
+									if (typeof r[1] != 'undefined' && parseInt(r[1].insertId))
 										res.redirect(site_url+'/'+req.params.cat+'/'+req.params.alias+'/');
 									else
 										res.redirect(site_url);					
 								}
 							);
+						} else {
+							res.redirect(site_url+'/'+req.params.cat+'/'+req.params.alias+'/');
 						}
 						
 					}
@@ -1138,10 +1163,8 @@ app.post('/:cat/:alias/add-comment/', function (req, res) {
 app.get('/:cat/', CAT);
 
 
-app.post('/uploadone', function (req, res) {
-	
-	global.globalreq = req;
-	
+function UploadPreview(req, res, id) {
+
 	var storage = multer.diskStorage({
       destination: function (req, file, callback) {
         callback(null, __dirname + '/public/uploads/');
@@ -1151,16 +1174,53 @@ app.post('/uploadone', function (req, res) {
         if (file.mimetype == 'image/jpeg') mimetype = '.jpg';
         if (file.mimetype == 'image/png') mimetype = '.png';
         if (file.mimetype == 'image/gif') mimetype = '.gif';     
-        fileName = Date.now().toString(16)+mimetype;
+        fileName = id+'.preview.gif';
         callback(null, fileName);
       }
     });
-	
-	var upload = multer({ storage : storage }).single('file', 1);
+
+	var upload = multer({ storage : storage }).single('file', 1); 
     upload(req,res,function(err) {
-		console.log(req.file);
-		res.end(req.file.filename);
+		console.log(req.files['preview']);
+		//res.end(req.file.filename);
+		path = __dirname+'/public/uploads/'+id+'.preview.gif';
+		console.log(path)
+		gm(req.files['preview'].path).
+            quality(100).
+            geometry(240, 240, '>').
+            gravity('SouthEast').
+            noProfile().
+            write(path, function (err) {
+                child_process.exec('exiftool -comment="wiki engine http://wikiclick.ru" '+path, {shell: true, encoding: 'utf8'}, function (error, stdout, stderr) {
+                    if (error) {throw error;}
+                    console.log('stdout: ' + stdout);
+                    console.log('stderr: ' + stderr);
+					setTimeout(function() {
+						console.log(req.files.preview.path, path)
+						fs.unlink(req.files.preview.path, function() { });
+						fs.unlink(path+'_original', function() { });
+					}, 1000)
+                });
+            });
 	});
+}
+
+app.post('/uploadone', multer(
+			{ dest: 'uploads/',
+			  filename: function (req, file, callback) {
+        	  		mimetype = '';
+        	  		if (file.mimetype == 'image/jpeg') mimetype = '.jpg';
+        	  		if (file.mimetype == 'image/png') mimetype = '.png';
+        	  		if (file.mimetype == 'image/gif') mimetype = '.gif';     
+        	  		fileName = Date.now().toString(16)+mimetype;
+        	  		callback(null, fileName);
+      		  }
+    		}).single('file'), function (req, res, next) {
+	
+		console.log(req, req.body);
+		res.end(req.files.file.path.replace(__dirname+'/public/uploads/', ''));
+
 });
 
-app.listen(80, '185.244.43.111');
+
+app.listen(80, 'wikiclick.ru');
