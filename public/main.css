@@ -444,9 +444,13 @@ a.ochoba.rmv {
 .mode-admin #alias, .mode-admin #cat {border-color: #ff7070;}
 .answerlink.hidden.delink.my{margin-left:280px;}
 .pages span {color:#aaa;}
-h3 a.q, h3 a.q:hover {
+h2 a.q, h2 a.q:hover, h3 a.q, h3 a.q:hover, h4 a.q, h4 a.q:hover, h5 a.q, h5 a.q:hover, h6 a.q, h6 a.q:hover {
     border: 0 !important;
 }
+article button.upimg {
+    margin-right: 30px;
+}
+
 .alias-preview{
 	width: 120px;
     height: 120px;
@@ -495,4 +499,3 @@ h2.hcat a {padding:4px 0;}
 .pblock a.maina {display: block;line-height:16px;}
 .pblock p.topmargin {margin-top:16px;}
 }
-
