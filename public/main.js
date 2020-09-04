@@ -242,7 +242,11 @@ function cords(p) {
 				}
 				$(this).html('<selection id="H'+i+'">'+$(this).html()+'</selection>')
 				$str += '<li><a href="#H'+i+'">'+$(this).text()+'</li>'
-				if (i < $ah.length-1 && a>b) $str+='</ul>'
+				if (i < $ah.length-1 && a>b) {
+					for (i = parseInt(a.substring(1)); i>parseInt(b.substring(1)); i--) {
+						$str += '</ul>'
+					}
+				}
 				if (a<b && !(a=='H1' && b=='H2')) $str += '<ul>';
 				if (i == $ah.length-1) {
 					for (i = parseInt($(this).prop('tagName').substring(1)); i>=3; i--) {
