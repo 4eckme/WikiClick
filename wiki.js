@@ -75,6 +75,7 @@ var pagination = function() { return {
 	}	
 }}
 
+var http = require('http')
 var express = require('express');
 var dateFormat = require('dateformat');
 var sanitizeHtml = require('sanitize-html');
@@ -165,7 +166,7 @@ String.prototype.replaceArray = function(obj) {
     return replaceString;
 }
 
-var links = '<a href="/">Старт</a>'+
+var links = '<strong><a href="/">Старт</a></strong><a href="http://host.wikiclick.ru">Хостинг</a>'+
 '<br>'+
 cats_links()+
 '<br><br>'+
@@ -262,6 +263,7 @@ function AddEdit(res, req, table, data, tags_string) {
 				if (table == 'pages' && typeof tags_string !== 'undefined' && tags_string.length) {
 					tags_string = StripTags(tags_string);
 					tags_string = tags_string.replaceArray({',\\s+': ','});
+					tags_string = tags_string.replaceArray({'\\s+': '_'});
 					tags = tags_string.split(',', 10);
 					query_tags = subquery+'insert into wikitags (pageid, tag, ip, date) values ';
 					tags_chain = new Array();
@@ -338,7 +340,7 @@ var CAT = function (req, res) {
 				for(var i in r[1]){
 					tags_arr = r[1][i].tagstring.replaceArray({',\\s+': ','}).split(',');
 					for (var j in tags_arr) {
-						tags_arr[j]='<a href="/тег/'+encodeURIComponent(tags_arr[j])+'/" class="tag">'+tags_arr[j]+'</a>';
+						tags_arr[j]='<a href="/тег/'+encodeURIComponent(tags_arr[j])+'/" class="tag">#'+tags_arr[j]+'</a>';
 					}
 					r[1][i].tagstring='<div class="tags">'+tags_arr.join('')+'</div>';
 					space_alias = r[1][i].alias.replaceArray({'_':' '});
@@ -384,7 +386,7 @@ var TAG = function (req, res) {
 				for(var i in r[1]){
 					tags_arr = r[1][i].tagstring.split(',');
 					for (var j in tags_arr) {
-						tags_arr[j]='<a href="/тег/'+encodeURIComponent(tags_arr[j])+'/" class="tag">'+tags_arr[j]+'</a>';
+						tags_arr[j]='<a href="/тег/'+encodeURIComponent(tags_arr[j])+'/" class="tag">#'+tags_arr[j]+'</a>';
 					}
 					r[1][i].tagstring='<div class="tags">'+tags_arr.join('')+'</div>';
 					space_alias = r[1][i].alias.replaceArray({'_':' '});
@@ -434,7 +436,7 @@ var SEARCH = function (req, res) {
 				for(var i in r[1]){
 					tags_arr = r[1][i].tagstring.split(',');
 					for (var j in tags_arr) {
-						tags_arr[j]='<a href="/тег/'+encodeURIComponent(tags_arr[j])+'/" class="tag">'+tags_arr[j]+'</a>';
+						tags_arr[j]='<a href="/тег/'+encodeURIComponent(tags_arr[j])+'/" class="tag">#'+tags_arr[j]+'</a>';
 					}
 					r[1][i].tagstring='<div class="tags">'+tags_arr.join('')+'</div>';
 					space_alias = r[1][i].alias.replaceArray({'_':' '});
@@ -798,18 +800,19 @@ app.get('/:cat/:alias/', function (req, res) {
 				connection.query(
 					'SELECT id, tag FROM wikitags WHERE pageid=:pageid ORDER BY id ASC LIMIT 10; '+
 					'SELECT count(id) as comcnt FROM comments WHERE pagealias=:pagealias; '+
-					'SELECT id, date FROM pages WHERE alias=:alias AND cat=:cat ORDER BY id DESC LIMIT 10',
+					'SELECT id, date, ip FROM pages WHERE alias=:alias AND cat=:cat ORDER BY id DESC LIMIT 10',
 					{pageid:r[0].id, pagealias:req.params.cat+'/'+req.params.alias, alias:req.params.alias, cat:req.params.cat},
 					function (e1, r1, f1) {
 						console.log(this.sql);
 						console.log(e1);
 						tags = new Array();
 						for (var i in r1[0]) {
-							tags.push('<a class="tag" href="/тег/'+encodeURIComponent(r1[0][i].tag)+'/">'+r1[0][i].tag+'</a>')
+							tags.push('<a class="tag" href="/тег/'+encodeURIComponent(r1[0][i].tag)+'/">#'+r1[0][i].tag+'</a>')
 						}
 						versions = new Array();
 						for (var i in r1[2]) {
-							versions.push('<a href="индекс_'+r1[2][i].id+'"><h3>'+dateFormat(r1[2][i].date, 'd mmmm yyyy HH:MM')+'</h3></a>')
+							adminfo=""; if (req.session.admin === true) adminfo = "class='cursor-q' title='IP "+r1[2][i].ip+"'";
+							versions.push('<a href="индекс_'+r1[2][i].id+'" '+adminfo+'><h3>'+dateFormat(r1[2][i].date, 'd mmmm yyyy HH:MM')+'</h3></a>')
 						}
 						fs.readFile(__dirname + '/views/Page.html', 'utf8', function(err, contents) {
 						    res.end(contents.replaceArray({
@@ -840,8 +843,8 @@ app.get('/:cat/:alias/'+encodeURIComponent('индекс_')+':id', function (req
 
 	console.log(req.params);
 	connection.query(
-		'SELECT * FROM pages WHERE alias=:alias AND cat=:cat AND id=:id ORDER BY id DESC LIMIT 1',
-		{alias:req.params.alias, cat:req.params.cat, id:req.params.id},
+		'SELECT * FROM pages WHERE id=:id AND alias=:alias AND cat=:cat ORDER BY id DESC LIMIT 1',
+		{id:req.params.id, alias:req.params.alias, cat:req.params.cat},
 		function (e, r, f) {
 			console.log(e);
 			if(!e && r.length) {
@@ -854,8 +857,9 @@ app.get('/:cat/:alias/'+encodeURIComponent('индекс_')+':id', function (req
 						console.log(e1);
 						tags = new Array();
 						for (var i in r1[0]) {
-							tags.push('<a class="tag" href="/тег/'+r1[0][i].tag+'/">'+r1[0][i].tag+'</a>')
+							tags.push('<a class="tag" href="/тег/'+r1[0][i].tag+'/">#'+r1[0][i].tag+'</a>')
 						}
+						adminfo=""; if (req.session.admin === true) adminfo = "class='cursor-q' title='IP "+r[0].ip+"'";
 						fs.readFile(__dirname + '/views/Version.html', 'utf8', function(err, contents) {
 							rm_link = '';
 							if (req.session.admin) {
@@ -874,7 +878,8 @@ app.get('/:cat/:alias/'+encodeURIComponent('индекс_')+':id', function (req
 								'%%comments%%':'',
 								'%%version%%':dateFormat(r[0].date, 'd mmmm yyyy HH:MM'),
 								'%%tagstring%%':r[0].tagstring,
-								'%%rmlink%%':rm_link
+								'%%rmlink%%':rm_link,
+								'%%adminfo%%':adminfo
 						    }));
 			  			});
 					}
@@ -1225,6 +1230,5 @@ app.post('/uploadone', multer(
 		res.end(req.files.file.path.replace(__dirname+'/public/uploads/', ''));
 
 });
-
 
 app.listen(80, 'wikiclick.ru');
