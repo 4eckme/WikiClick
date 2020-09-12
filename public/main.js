@@ -324,8 +324,9 @@ $(document).ready(function() {
 		$('.bottombar').append('<img src="/logo.png">');
 	}
 	$('.upimg').mousedown(function() { 
-        $('#uploadone input').click();
-    });
+        	$('#uploadone input').click();
+    	});
+	if ($('.upimg').length == 1) buttons();
 	$('#uploadone input').change(function() {
 		upload_img();
 	});
@@ -335,3 +336,118 @@ $(document).ready(function() {
 		$(document).scrollTop(0);
 	});
 })
+
+
+
+function buttons() {
+	$('.upimg').attr('title', 'Добавить картинку');
+	$('.upimg').after('<button class="upimg up-h" style="'+
+'    background: #0cca6c;'+
+'    margin-top: 60px;'+
+'" title="Выделение в заголовок">H</button>'+
+'<button class="upimg up-a" style="'+
+'    margin-top: 105px;'+
+'    background: #0e71ca;'+
+'" title="Добавить ссылку">a</button>'+
+'<button class="upimg up-b" style="'+
+'    margin-top: 150px;'+
+'    background: #ff8400;'+
+'" title="Выделение в жирный текст">b</button>'+
+'<button class="upimg up-p" style="'+
+'    margin-top: 195px;'+
+'    background: #d524d6;'+
+'" title="Выделение в абзац">p</button>'+
+'<button class="upimg up-code" style="'+
+'    margin-top: 240px;'+
+'    font-size: 10px;'+
+'    background: #636363;'+
+'" title="Преобразовать в код">сode</button>'+
+'<button class="upimg up-css" style="'+
+'    margin-top: 285px;'+
+'    background: #ca0e0e;'+
+'" title="Добавить стили к выделенному тексту">css</button>'+
+'<button class="upimg up-br" style="'+
+'    margin-top: 330px;'+
+'    background: #7d6401;'+
+'" title="Новая строка">br</button>');
+	window.usertext = document.getElementById("article");
+    $('.up-h').click(function() {
+		htag = 'h'+prompt('Укажите уровень заголовка от 1 до 6')
+		replaceSelectedText(window.usertext, '<'+htag+'>'+window.getSelection().toString()+'</'+htag+'>');
+	});
+	$('.up-a').click(function() {
+		ahref = prompt('Адрес ссылки (включая http:// или https://)');
+		atext = prompt('Текст ссылки')
+		if (ahref.indexOf(window.location.host) == -1) atarget='target="_blank"'; else atarget="";
+		insertAtCursor($('.page textarea')[0], ' <a href="'+ahref+'" '+atarget+'>'+atext+'</a>')
+	});
+	$('.up-b').click(function() {
+		replaceSelectedText(window.usertext, '<b>'+window.getSelection().toString()+'</b>');
+	});
+	$('.up-p').click(function() {
+		replaceSelectedText(window.usertext, '<p>'+window.getSelection().toString()+'</p>');
+	});
+	$('.up-code').click(function() {
+		codelang = prompt('Укажите язык для выделенного, например, javascript');
+		codetext = window.getSelection().toString().replaceArray({'<':'&amp;lt;', '>': '&amp;gt;'});
+		replaceSelectedText(window.usertext, '<pre><code class="lang-'+codelang+'">'+codetext+'</code></pre>');
+	});
+	$('.up-css').click(function() {
+		cssstyle = prompt('Напишите css-стили для аттрибута style');
+		replaceSelectedText(window.usertext, '<span style="'+cssstyle+'">'+window.getSelection().toString()+'</span>');
+	});
+	$('.up-br').click(function() {
+		insertAtCursor($('.page textarea')[0], '<br>')
+	});
+}
+
+function getInputSelection(el) {
+    var start = 0, end = 0, normalizedValue, range,
+        textInputRange, len, endRange;
+
+    if (typeof el.selectionStart == "number" && typeof el.selectionEnd == "number") {
+        start = el.selectionStart;
+        end = el.selectionEnd;
+    } else {
+        range = document.selection.createRange();
+
+        if (range && range.parentElement() == el) {
+            len = el.value.length;
+            normalizedValue = el.value.replace(/\r\n/g, "\n");
+
+            // Create a working TextRange that lives only in the input
+            textInputRange = el.createTextRange();
+            textInputRange.moveToBookmark(range.getBookmark());
+
+            // Check if the start and end of the selection are at the very end
+            // of the input, since moveStart/moveEnd doesn't return what we want
+            // in those cases
+            endRange = el.createTextRange();
+            endRange.collapse(false);
+
+            if (textInputRange.compareEndPoints("StartToEnd", endRange) > -1) {
+                start = end = len;
+            } else {
+                start = -textInputRange.moveStart("character", -len);
+                start += normalizedValue.slice(0, start).split("\n").length - 1;
+
+                if (textInputRange.compareEndPoints("EndToEnd", endRange) > -1) {
+                    end = len;
+                } else {
+                    end = -textInputRange.moveEnd("character", -len);
+                    end += normalizedValue.slice(0, end).split("\n").length - 1;
+                }
+            }
+        }
+    }
+
+    return {
+        start: start,
+        end: end
+    };
+}
+
+function replaceSelectedText(el, text) {
+    var sel = getInputSelection(el), val = el.value;
+    el.value = val.slice(0, sel.start) + text + val.slice(sel.end);
+}
