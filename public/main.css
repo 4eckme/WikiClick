@@ -312,16 +312,17 @@ article a:hover, .rcomment a:hover{
 	border-bottom: 1px solid #000;
 	color:#000 !important;
 }
-span.spoiler {
+div.spoiler {
     background: #222;
 	color:#222;
+	display:inline;
 }
-span.spoiler:before{
+div.spoiler:before{
 	content:'Spoiler: ';
 	background:#00a7ff;
 	color:#fff;
 }
-span.spoiler:hover {
+div.spoiler:hover {
     background: #00a7ff;
     color: #fff;
 }
@@ -450,6 +451,7 @@ h2 a.q, h2 a.q:hover, h3 a.q, h3 a.q:hover, h4 a.q, h4 a.q:hover, h5 a.q, h5 a.q
 article button.upimg {
     margin-right: 30px;
 }
+.cursor-q{cursor: help;}
 
 .alias-preview{
 	width: 120px;
