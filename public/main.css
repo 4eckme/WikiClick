@@ -137,7 +137,7 @@ span.log-comment {
     width: fill-available;
 }
 .edit:active, .edit:focus, .iedit:active, .iedit:focus, .sedit:active, .sedit:focus {border: 2px solid #000000 !important;}
-.edit{height:400px;font-size:16px;padding:8px;resize:vertical;padding-right:70px;}
+.edit{min-height:400px;height:400px;font-size:16px;padding:8px;resize:vertical;padding-right:70px;}
 .iedit{font-size:16px;padding:8px}
 .iedit.idesc {border-color:#aaa;}
 .sedit{font-size:16px;padding:8px}
