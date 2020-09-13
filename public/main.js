@@ -152,6 +152,7 @@ function comments_json(id) {
 			}
 			$('.comments').append('<div id="answer0" data-parent="0"><a class="answerlink" onclick="answer(0);">Ответить</a></div>');
 			$('.btn-show-comments').remove();
+			$.each($('.rname'), function (k, v) { $(this).attr('style', 'color:#0f984d;filter:hue-rotate('+(Math.abs((hashCode($(this).html())%12))*30)+'deg);'); });
 		}
 	});
 }
@@ -450,4 +451,12 @@ function getInputSelection(el) {
 function replaceSelectedText(el, text) {
     var sel = getInputSelection(el), val = el.value;
     el.value = val.slice(0, sel.start) + text + val.slice(sel.end);
+}
+
+function hashCode(s) {
+    let h;
+    for(let i = 0; i < s.length; i++) 
+          h = Math.imul(31, h) + s.charCodeAt(i) | 0;
+
+    return h;
 }
