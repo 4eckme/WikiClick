@@ -192,6 +192,7 @@ function bookmark(pagealias) {
 		$('.bookmark').addClass('active');
 		$('.bookmark').attr('title', 'Убрать из закладок');
 		$('#bookmarks').prepend('<a href="'+pagealias.replace('#', '/')+'">'+pagealias.substring(pagealias.indexOf('/')+1)+'</a>')
+		$('#bookmarks span').remove();
 	}
 }
 
@@ -204,7 +205,7 @@ function bookmarks() {
 		}
 	}
 	if (c == 0) {
-		$('#bookmarks').append('<span style="color:#444">У Вас пока нет закладок</a>')
+		$('#bookmarks').append('<span style="color:#444;padding-left:16px;">У Вас пока нет закладок</a>')
 	}
 }
 
