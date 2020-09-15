@@ -169,8 +169,9 @@ String.prototype.replaceArray = function(obj) {
 var links = '<strong><a href="/">Старт</a></strong><a href="http://host.wikiclick.ru">Хостинг</a>'+
 '<br>'+
 cats_links()+
-'<br><br>'+
+'<br>'+
 '<a href="/случайная_страница/">Случайная страница</a>'+
+'<a href="/статистика@материалы/">Сводка по материалам</a><br>'+
 '<input type="text" class="iedit isearch" placeholder="Поиск">';
 
 var allowed = 'allowedTags: [\n'+
@@ -458,6 +459,115 @@ var SEARCH = function (req, res) {
 	);
 }
 
+
+
+function special_add_comment (req, res) {
+	check_captcha = req.body.captcha.length >= 4 && req.body.captcha == req.session.captcha;
+	if (!check_captcha) {res.end('Неправильно введена каптча'); req.session.captcha = ''; return false;}
+	else {req.session.captcha = '';}
+	if (req.body.parentid == 0) {
+		AddEdit(res, req, 'comments', {
+			id: 0,
+			pagealias: req.params.tpl+'@'+req.params.mod,
+			name: req.body.name,
+			comment: req.body.comment,
+			parentid: 0,
+			level:0
+		});
+	} else {
+		connection.query('select (level+1) as level from comments where id=:id limit 1', {id:req.body.parentid},
+		function (e, r, f) {
+			if(!e && r[0].level) {
+				level = r[0].level;
+				AddEdit(res, req, 'comments', {
+					id: 0,
+					pagealias: req.params.tpl+'@'+req.params.mod,
+					name: req.body.name,
+					comment: req.body.comment,
+					parentid: req.body.parentid,
+					level:level
+				});
+			}
+		})
+	}
+}
+
+function special_comments_json (req, res) {
+	connection.query(
+		'SELECT * FROM comments WHERE pagealias=:pagealias ORDER by parentid ASC, id ASC',
+		{pagealias:req.params.tpl+'@'+req.params.mod},
+		function(e,r,f) {
+			if (!e) {
+				if (typeof req.session.mycomments == 'undefined' || !req.session.mycomments)
+						req.session.mycomments = new Array();
+				console.log('my', req.session.mycomments);
+				
+				for (var i in r) {
+					if (req.session.mycomments.includes(r[i].id)) r[i].my='my'; else r[i].my = '';
+					r[i].date = dateFormat(r[i].date, "d mmmm yyyy HH:MM");
+				}
+				res.end(JSON.stringify({comments:r,  admin:(req.session.admin===true)}))
+			}
+		}
+	);
+};
+
+
+var ob;
+app.get('/:tpl@:mod/:action?', function (req, res) {
+	addslash(req, res);
+	req.params.tpl = req.params.tpl.replaceArray({'\\.': ''});
+	req.params.mod = req.params.mod.replaceArray({'\\.': ''});
+	
+	if(req.params.action == 'comments-json') { special_comments_json(req, res);} else {
+
+		if (!fs.existsSync(__dirname + '/views/special/'+req.params.tpl+'/'+req.params.mod+'.js') || !fs.existsSync(__dirname + '/views/special/'+req.params.tpl+'.html'))	{
+			res.status(404);
+			fs.readFile(__dirname + '/views/404.html', 'utf8', function(err, contents) {
+				res.end(contents.replaceArray({
+					'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS, '%%links%%':links
+				}));
+			});
+			return false;
+		}
+	
+
+		var dn = __dirname;
+		eval(fs.readFileSync(dn+'/views/special/'+req.params.tpl+'/'+req.params.mod+'.js'+'').toString());
+		for (var i in ob) { if (i !== ('//'+req.params.action+'//') && (i.indexOf('//') == 0)) ob[i] = ''; }
+		fs.readFile(dn+'/views/special/'+req.params.tpl+'.html', 'utf8', function(err, contents) {
+			setTimeout(function() { contents = contents.replaceArray(ob);
+			res.end(contents.replaceArray({
+				'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS, '%%links%%':links,
+			}))}, 500);
+		});
+	
+	
+		if (!(typeof req.params.action === 'undefined' || req.params.action && typeof(ob['//'+req.params.action+'//']) == 'string')) {
+			res.status(404);
+			fs.readFile(__dirname + '/views/404.html', 'utf8', function(err, contents) {
+				res.end(contents.replaceArray({
+					'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS, '%%links%%':links
+				}));
+			});
+		}
+
+	}
+});
+
+app.post('/:tpl@:mod/:action?', function (req, res) {
+	
+	req.params.tpl = req.params.tpl.replaceArray({'\\.': ''});
+	req.params.mod = req.params.mod.replaceArray({'\\.': ''});
+	
+	if(req.params.action == 'add-comment') { special_add_comment(req, res); return false } 
+})
+
+app.get('/uploads/*+.preview.gif', function(req, res) {
+    res.redirect(site_url+'/preview.gif');
+});
+
+
 app.get('/uploads/*+.preview.gif', function(req, res) {
     res.redirect(site_url+'/preview.gif');
 });
@@ -538,7 +648,9 @@ app.get('/', function (req, res) {
 					for (var i in r[1]) {						
 						if (i==0 || r[1][i].pagealias != r[1][i-1].pagealias) {
 							if (r[1][i].pagealias == '/') {pa = ['wikiclick', 'Главная страница']; page_alias = cat_href = '/'; alt=''; space_alias=pa[1]; page_alias=''}
+							else if (r[1][i].pagealias.indexOf('@')>0) {['wikiclick', r[1][i].pagealias]; page_alias = '/'+r[1][i].pagealias+''; cat_href = ''; alt=' title="Служебная страница" ';space_alias=r[1][i].pagealias;pa=['cлужебная',r[1][i].pagealias];}
 							else {
+								
 								pa = r[1][i].pagealias.split('/');
 								cat_href="/"+pa[0]+'/';
 								space_alias = pa[1].replaceArray({'_':" "});
@@ -725,6 +837,7 @@ app.post('/'+encodeURIComponent('создать')+'/', function (req, res) {
 	console.log(req.body);
 	req.body.alias = req.body.alias.replaceArray({'\\s+': '_'});
 	req.body.tags = req.body.tags.replaceArray({',\\s+': ','});
+	req.body.tags = req.body.tags.replaceArray({'\\s+': '_'});
 
 	check_captcha = req.body.captcha.length >= 4 && req.body.captcha == req.session.captcha;
 	if (!check_captcha) {
@@ -1083,6 +1196,7 @@ app.post('/:cat/:alias/'+encodeURIComponent('редактировать')+'/:cac
 	delete req.session.ch;
 	
 	req.body.tags = req.body.tags.replaceArray({',\\s+': ','});
+	req.body.tags = req.body.tags.replaceArray({'\\s+': '_'});
 
 	check_captcha = ((req.body.captcha.length >= 4) && (req.body.captcha == req.session.captcha));
 	console.log(req.body.captcha, req.session.captcha);
@@ -1230,5 +1344,6 @@ app.post('/uploadone', multer(
 		res.end(req.files.file.path.replace(__dirname+'/public/uploads/', ''));
 
 });
+
 
 app.listen(80, 'wikiclick.ru');
