@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel="shortcut icon" href="/favicon.png" type="image/png">
+<title>%%sitename%%: Статистика / Материалы</title>
+<meta name="description" content="%%metadescription%%">
+<meta name="keywords" content="%%metakeywords%%"> 
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+<link rel="stylesheet" href="/main.css">
+<script src="/jquery.js"></script>
+<script src="/main.js"></script>
+</head><body>
+<div class="top"><div class="actions"><a href="/создать/">Создать страницу</a></div><h2 class="logo"><a href="/">%%sitename%%</a></h2></div>
+<div class="leftbar"><center class="logo2">
+<img src="/logo.png" style="
+    margin-top: 64px;
+">
+</center>
+<div class="links">
+%%links%%
+</div>
+</div>
+<div class="colorbar red" style="background: #ff6ff9;">%%totalsize%%</div>
+<div class="page">
+<h1>Количество материалов:</h1>
+<ul>
+<li>Всего создано <b>%%totalpages%%</b> страниц</li>
+<li>На сервере хранится <b>%%totalindexes%%</b> правок</li>
+<li>Написанно коментариев: <b>%%totalcomments%%</b></li>
+<li>Загружено <b>%%totaluploads%%</b> файлов</li>
+<li>Общий размер загрузок <b>%%uploadssize%%</b></li>
+</ul>
+<a onclick="history.back()" style="
+    color: #006e6f;
+    font-weight: bold;
+    font-size: 24px;
+    margin-top: 25px;
+">← Назад</a>
+<br><br>
+<hr>
+<div class="block-comments">
+<h3 style="color:#e48a00;">Комментарии (%%commentscount%%)</h3>
+<div class="comments"></div>
+<input type="button" class="button btn-show-comments" value="Показать комментарии" onclick="window.location.hash='#/комментарии'">
+</div>
+</div>
+</body></html>
