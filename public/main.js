@@ -69,14 +69,14 @@ function check_captcha() {
 				$.ajax({
 				   type: "POST",
 				   url: 'add-comment',
-				   data: $('form:visible').serialize(),
+				   data: $('form:visible:last').serialize(),
 				   dataType:'json',
 				   success: function(data)
 				   {
 				       console.log(data);
 					   console.log(data['id']);
 					   rname = $('.iedit[name="name"]:visible').val().length ? $('.iedit[name="name"]:visible').val() : 'Анонимус';
-				       parent_id = parseInt($('form:visible').parent().attr('data-parent'));
+				       parent_id = parseInt($('form:visible:last').parent().attr('data-parent'));
 comm = '<div class="reply r'+data.id+'" style="margin-left:'+(parent_id ? 30 : 0)+'px" data-id="'+data.id+'"><div class="rname">'+rname+'</div><div class="rdate">только что</div><div class="rcomment" data-comment="'+escapec($('.edit:visible').val())+'">'+window.comment($('.edit:visible').val())+'</div><div id="answer'+data.id+'" data-parent="'+data.id+'"><a class="answerlink hidden delink my" onclick="delete_comment('+data.id+')">Удалить</a><a class="answerlink hidden" onclick="edit_comment('+data.id+')" style="display: block;">Редактировать</a><a class="answerlink" onclick="answer('+data.id+')" style="display: block;">Ответить</a></div><div class="replies"></div></div>';
 if (parent_id == 0) {$('#answer0').before(comm)}
 else {$('.r'+parent_id+' .replies:first').append(comm)}
@@ -152,7 +152,7 @@ function comments_json(id) {
 			}
 			$('.comments').append('<div id="answer0" data-parent="0"><a class="answerlink" onclick="answer(0);">Ответить</a></div>');
 			$('.btn-show-comments').remove();
-			$.each($('.rname'), function (k, v) { $(this).attr('style', 'color:#0f984d;filter:hue-rotate('+(Math.abs((hashCode($(this).html())%12))*30)+'deg);'); });
+			$.each($('.rname'), function (k, v) { $(this).attr('style', 'color:#0f984d;filter:hue-rotate('+(Math.abs((hashCode($(this).html())%12))*30)+'deg);'); })
 		}
 	});
 }
@@ -272,6 +272,7 @@ function cords(p) {
 }
 
 $(document).ready(function() {
+	
 	$('body').append(
 		'<!-- Yandex.Metrika counter -->'+
 		'<script type="text/javascript" >'+
@@ -326,20 +327,23 @@ $(document).ready(function() {
 		$('.bottombar').append('<img src="/logo.png">');
 	}
 	$('.upimg').mousedown(function() { 
-        	$('#uploadone input').click();
-    	});
+        $('#uploadone input').click();
+    });
 	if ($('.upimg').length == 1) buttons();
 	$('#uploadone input').change(function() {
 		upload_img();
 	});
 	$('#preview-btn').click(function() {
+		if ($('article form').length) {
+			$('h3').eq(0).prev('article').remove();
+			$('h3').eq(0).before('<article style="    color: #333;     display: block;    padding: 20px;    background: #ffffff;    border: 1px dashed #2db0c5;">'+$('textarea:visible').val()+'</article>');
+			return;
+		}
 		$('article').html($('textarea:visible').val());
 		cords('preview');
 		$(document).scrollTop(0);
 	});
-})
-
-
+});
 
 function buttons() {
 	$('.upimg').attr('title', 'Добавить картинку');
