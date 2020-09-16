@@ -167,6 +167,14 @@ input.button.cancel {
 	box-shadow: inset 0 -2px 0 0 #004f69;
 	font-family:monospace;
 }
+.tags .tag span {
+    background: #fff;
+    box-shadow: 0 0 0 3px #fff;
+    margin-left: 8px;
+    color: #222;
+    padding-left: 3px;
+    padding-right: 3px;
+}
 .block-comments .iedit {
     max-width: 300px;
     display: inline-block;
@@ -374,6 +382,13 @@ article img {
     box-shadow: 0 0 0 2px #000, 0 0 0 4px #eee;
 }
 article a.img{border-bottom:0 !important;}
+article a.img span{
+    float: right;
+    clear: right;
+    margin: 0 21px;
+    width: 200px;
+    text-align: center;
+}
 .isearch{border-color:#888;margin:16px;}
 h2.hcat a {
     font-size: inherit;
@@ -452,7 +467,7 @@ h2 a.q, h2 a.q:hover, h3 a.q, h3 a.q:hover, h4 a.q, h4 a.q:hover, h5 a.q, h5 a.q
     border: 0 !important;
 }
 article button.upimg {
-    margin-right: 30px;
+    /* margin-right: 30px; */
 }
 .cursor-q{cursor: help;}
 

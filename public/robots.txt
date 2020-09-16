@@ -15,8 +15,10 @@ Disallow: /случайна_страница/
 Disallow: /ajax-edit-comment/
 Disallow: /ajax-delete-comment/
 Disallow: /add-comment/
+Disallow: /*/add-comment/
 Disallow: /*/*/add-comment/
 Disallow: /comments-json/
+Disallow: /*/comments-json/
 Disallow: /*/*/comments-json/
 Disallow: /uploadone/
 Disallow: /admin/
