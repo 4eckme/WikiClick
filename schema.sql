@@ -59,7 +59,7 @@ CREATE TABLE `pages` (
   KEY `idx_catspages` (`cat`),
   KEY `idx_aliaspages` (`alias`),
   KEY `idx_datepages` (`date`),
-  FULLTEXT KEY `search` (`short`,`tagstring`,`article`)
+  FULLTEXT KEY `search` (`alias`, `short`,`tagstring`,`article`)
 ) ENGINE=MyISAM AUTO_INCREMENT=43 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
