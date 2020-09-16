@@ -38,6 +38,7 @@ var cats = {
 	'games:mobile': 'Мобильные игры'
 }
 
+
 function cats_links() {
 	var result = '';
 	for (var i in cats) {
@@ -63,7 +64,7 @@ var pagination = function() { return {
 		this.pages = Math.ceil(this.count/this.limit);
 	},	
 	sql: function() {
-		return 'LIMIT '+this.limit*(this.page-1)+', '+this.limit
+		return 'ORDER BY p.alias ASC LIMIT '+this.limit*(this.page-1)+', '+this.limit
 	},
 	html: function () {
 		chain = Array();
@@ -170,6 +171,7 @@ var links = '<strong><a href="/">Старт</a></strong><a href="http://host.wik
 '<br>'+
 cats_links()+
 '<br>'+
+'<a href="/теги/">Теги</a>'+
 '<a href="/случайная_страница/">Случайная страница</a>'+
 '<a href="/статистика@материалы/">Сводка по материалам</a><br>'+
 '<input type="text" class="iedit isearch" placeholder="Поиск">';
@@ -306,61 +308,81 @@ function ip(req) {
 }
 
 
+var TAGS = function (req, res) {
+	addslash(req, res);
+	connection.query('select t.tag as tag, count(ch.id) as cnt from pagescache ch inner join wikitags t on ch.id = t.pageid group by t.tag having cnt>=2 order by cnt desc', {}, function(e, r, f) {
+		var tags = new Array()
+		for(var i in r) {
+			tags[i] ='<a href="/теги/'+r[i].tag+'/" class="tag">#'+r[i].tag+'<span>'+r[i].cnt+'</span></a>';
+		}
+		fs.readFile(__dirname + '/views/Tags.html', 'utf8', function(err, contents) {
+			res.end(contents.replaceArray({
+				'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS, '%%links%%':links,
+				'%%tags%%':tags.join('')
+			}));
+		});	
+	});
+}
+
+
 var CAT = function (req, res) {
 
-	if (typeof req.params.page !== 'undefined') dropslash(req, res);
-	else addslash(req, res);
+	if (req.params.cat == 'теги') TAGS(req, res); else {
 
-	pp = pagination();
-	if (typeof req.params.page != 'undefined') {
-		pp.page = ((parseInt(req.params.page) > 0) ? parseInt(req.params.page) : 1);
-	}
-	connection.query(
-		'select count(ch.id) as cnt from pagescache ch inner join pages p on p.id=ch.id and p.cat=:cat where true '+pp.sql()+'; '+
-		'select ch.id, p.cat, p.alias, p.short, p.tagstring from pagescache ch inner join pages p on p.id=ch.id and p.cat=:cat where true '+pp.sql()+'; ',
-		{cat:req.params.cat},
-		function(e, r, f) {
-			if (!e) {
-				if(typeof cats[req.params.cat] == 'undefined') {
-						res.status(404);
-						fs.readFile(__dirname + '/views/404.html', 'utf8', function(err, contents) {
-						    res.end(contents.replaceArray({
-								'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS, '%%links%%':links
-						    }));
-							return false;
-			  			});
-				}
+		if (typeof req.params.page !== 'undefined') dropslash(req, res);
+		else addslash(req, res);
 
-
-				pp.set_count(parseInt(r[0][0].cnt));
-
-				if (r[0][0].cnt == 0) { empty = '<p><h3>Здесь пока пусто<h3></p>'; pphtml=""; }
-				else {empty=''; pphtml= pp.html(); }
-
-				pblocks = "";
-				for(var i in r[1]){
-					tags_arr = r[1][i].tagstring.replaceArray({',\\s+': ','}).split(',');
-					for (var j in tags_arr) {
-						tags_arr[j]='<a href="/тег/'+encodeURIComponent(tags_arr[j])+'/" class="tag">#'+tags_arr[j]+'</a>';
-					}
-					r[1][i].tagstring='<div class="tags">'+tags_arr.join('')+'</div>';
-					space_alias = r[1][i].alias.replaceArray({'_':' '});
-					pblocks += '<div class="pblock"><div style="background-image:url('+site_url+'/uploads/'+r[1][i].id+'.preview.gif);" class="alias-preview"></div><a class="maina" href="/'+r[1][i].cat+'/'+r[1][i].alias+'/"><h2>'+space_alias+'</h2></a><p class="topmargin">'+r[1][i].short+'</p>'+r[1][i].tagstring+'</div>';
-				}
-						fs.readFile(__dirname + '/views/Cat.html', 'utf8', function(err, contents) {
-						    res.end(contents.replaceArray({
-								'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS,  '%%links%%':links,
-								'%%itemscount%%':r[0][0].cnt,
-								'%%h1%%':'Категория: <span class="hcat">'+cats[req.params.cat]+'</span>',
-								'%%h1text%%':'Категория: '+cats[req.params.cat]+' / Страница '+pp.page,
-								'%%pblocks%%':pblocks,
-								'%%empty%%':empty,
-								'%%pagination%%': pphtml
-						    }));
-			  			});
-			}
+		pp = pagination();
+		if (typeof req.params.page != 'undefined') {
+			pp.page = ((parseInt(req.params.page) > 0) ? parseInt(req.params.page) : 1);
 		}
-	);
+		connection.query(
+			'select count(ch.id) as cnt from pagescache ch inner join pages p on p.id=ch.id and p.cat=:cat where true '+pp.sql()+'; '+
+			'select ch.id, p.cat, p.alias, p.short, p.tagstring from pagescache ch inner join pages p on p.id=ch.id and p.cat=:cat where true '+pp.sql()+'; ',
+			{cat:req.params.cat},
+			function(e, r, f) {
+				if (!e) {
+					if(typeof cats[req.params.cat] == 'undefined') {
+							res.status(404);
+							fs.readFile(__dirname + '/views/404.html', 'utf8', function(err, contents) {
+								res.end(contents.replaceArray({
+									'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS, '%%links%%':links
+								}));
+								return false;
+				  			});
+					}
+
+
+					pp.set_count(parseInt(r[0][0].cnt));
+
+					if (r[0][0].cnt == 0) { empty = '<p><h3>Здесь пока пусто<h3></p>'; pphtml=""; }
+					else {empty=''; pphtml= pp.html(); }
+
+					pblocks = "";
+					for(var i in r[1]){
+						tags_arr = r[1][i].tagstring.replaceArray({',\\s+': ','}).split(',');
+						for (var j in tags_arr) {
+							tags_arr[j]='<a href="/теги/'+encodeURIComponent(tags_arr[j])+'/" class="tag">#'+tags_arr[j]+'</a>';
+						}
+						r[1][i].tagstring='<div class="tags">'+tags_arr.join('')+'</div>';
+						space_alias = r[1][i].alias.replaceArray({'_':' '});
+						pblocks += '<div class="pblock"><div style="background-image:url('+site_url+'/uploads/'+r[1][i].id+'.preview.gif);" class="alias-preview"></div><a class="maina" href="/'+r[1][i].cat+'/'+r[1][i].alias+'/"><h2>'+space_alias+'</h2></a><p class="topmargin">'+r[1][i].short+'</p>'+r[1][i].tagstring+'</div>';
+					}
+							fs.readFile(__dirname + '/views/Cat.html', 'utf8', function(err, contents) {
+								res.end(contents.replaceArray({
+									'%%sitename%%':SITE_NAME,  '%%metadescription%%':DESCRIPTION, 'metakeywords':KEYWORDS,  '%%links%%':links,
+									'%%itemscount%%':r[0][0].cnt,
+									'%%h1%%':'Категория: <span class="hcat">'+cats[req.params.cat]+'</span>',
+									'%%h1text%%':'Категория: '+cats[req.params.cat]+' / Страница '+pp.page,
+									'%%pblocks%%':pblocks,
+									'%%empty%%':empty,
+									'%%pagination%%': pphtml
+								}));
+				  			});
+				}
+			}
+		);
+	}
 }
 
 var TAG = function (req, res) {
@@ -387,7 +409,7 @@ var TAG = function (req, res) {
 				for(var i in r[1]){
 					tags_arr = r[1][i].tagstring.split(',');
 					for (var j in tags_arr) {
-						tags_arr[j]='<a href="/тег/'+encodeURIComponent(tags_arr[j])+'/" class="tag">#'+tags_arr[j]+'</a>';
+						tags_arr[j]='<a href="/теги/'+encodeURIComponent(tags_arr[j])+'/" class="tag">#'+tags_arr[j]+'</a>';
 					}
 					r[1][i].tagstring='<div class="tags">'+tags_arr.join('')+'</div>';
 					space_alias = r[1][i].alias.replaceArray({'_':' '});
@@ -422,8 +444,8 @@ var SEARCH = function (req, res) {
 		pp.page = ((parseInt(req.params.page) > 0) ? parseInt(req.params.page) : 1);
 	}
 	connection.query(
-		'select count(ch.id) as cnt from pagescache ch inner join pages p on p.id=ch.id WHERE MATCH (p.short, p.tagstring, p.article) AGAINST (:query in boolean mode) '+pp.sql()+'; '+
-		'select ch.id, p.cat, p.alias, p.short, p.tagstring from pagescache ch inner join pages p on p.id=ch.id WHERE MATCH (p.short, p.tagstring, p.article) AGAINST (:query in boolean mode) '+pp.sql()+'; ',
+		'select count(ch.id) as cnt from pagescache ch inner join pages p on p.id=ch.id WHERE MATCH (p.alias, p.short, p.tagstring, p.article) AGAINST (:query in boolean mode) '+pp.sql()+'; '+
+		'select ch.id, p.cat, p.alias, p.short, p.tagstring from pagescache ch inner join pages p on p.id=ch.id WHERE MATCH (p.alias, p.short, p.tagstring, p.article) AGAINST (:query in boolean mode) '+pp.sql()+'; ',
 		{query: requery},
 		function(e, r, f) {
 			console.log(e);
@@ -437,7 +459,7 @@ var SEARCH = function (req, res) {
 				for(var i in r[1]){
 					tags_arr = r[1][i].tagstring.split(',');
 					for (var j in tags_arr) {
-						tags_arr[j]='<a href="/тег/'+encodeURIComponent(tags_arr[j])+'/" class="tag">#'+tags_arr[j]+'</a>';
+						tags_arr[j]='<a href="/теги/'+encodeURIComponent(tags_arr[j])+'/" class="tag">#'+tags_arr[j]+'</a>';
 					}
 					r[1][i].tagstring='<div class="tags">'+tags_arr.join('')+'</div>';
 					space_alias = r[1][i].alias.replaceArray({'_':' '});
@@ -511,6 +533,7 @@ function special_comments_json (req, res) {
 		}
 	);
 };
+
 
 
 var ob;
@@ -718,9 +741,9 @@ app.get('/'+encodeURIComponent('случайная_страница')+'/', funct
 	});
 });
 
-app.get('/'+encodeURIComponent('тег')+'/:tag/', TAG);
+app.get('/'+encodeURIComponent('теги')+'/:tag/', TAG);
 
-app.get('/'+encodeURIComponent('тег')+'/:tag/'+encodeURIComponent('страница_')+':page', TAG);
+app.get('/'+encodeURIComponent('теги')+'/:tag/'+encodeURIComponent('страница_')+':page', TAG);
 
 app.get('/comments-json/', function (req, res) {
 	connection.query(
@@ -920,7 +943,7 @@ app.get('/:cat/:alias/', function (req, res) {
 						console.log(e1);
 						tags = new Array();
 						for (var i in r1[0]) {
-							tags.push('<a class="tag" href="/тег/'+encodeURIComponent(r1[0][i].tag)+'/">#'+r1[0][i].tag+'</a>')
+							tags.push('<a class="tag" href="/теги/'+encodeURIComponent(r1[0][i].tag)+'/">#'+r1[0][i].tag+'</a>')
 						}
 						versions = new Array();
 						for (var i in r1[2]) {
@@ -970,7 +993,7 @@ app.get('/:cat/:alias/'+encodeURIComponent('индекс_')+':id', function (req
 						console.log(e1);
 						tags = new Array();
 						for (var i in r1[0]) {
-							tags.push('<a class="tag" href="/тег/'+r1[0][i].tag+'/">#'+r1[0][i].tag+'</a>')
+							tags.push('<a class="tag" href="/теги/'+r1[0][i].tag+'/">#'+r1[0][i].tag+'</a>')
 						}
 						adminfo=""; if (req.session.admin === true) adminfo = "class='cursor-q' title='IP "+r[0].ip+"'";
 						fs.readFile(__dirname + '/views/Version.html', 'utf8', function(err, contents) {
